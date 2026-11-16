@@ -1,27 +1,27 @@
-export interface MobileSettings {
-  minAppVersion: string;
-  forceUpdate: boolean;
-  maintenanceMode: boolean;
-  supportEmail: string;
-  termsUrl: string;
-  privacyUrl: string;
-}
-
-export interface FeatureFlags {
-  enableAiNutritionist: boolean;
-  enableBarcodeScanner: boolean;
-  enableCommunityRecipes: boolean;
-  enableExportPdfReports: boolean;
+export interface MobileFeatureFlags {
+  google_sign_in_enabled: boolean;
+  work_offline_enabled: boolean;
   [key: string]: boolean;
 }
 
+export interface MobileSettings {
+  id: string;
+  appName: string;
+  currentVersion: string;
+  defaultTheme: string;
+  schemaVersion?: number;
+  featureFlags: MobileFeatureFlags;
+}
+
+export type FeatureFlags = MobileFeatureFlags;
+
 export interface AppSettings {
   mobile: MobileSettings;
-  featureFlags: FeatureFlags;
+  featureFlags: MobileFeatureFlags;
 }
 
 export interface IAppSettingsRepository {
   getMobileSettings(): Promise<MobileSettings>;
   updateMobileSettings(settings: Partial<MobileSettings>): Promise<MobileSettings>;
-  patchFeatureFlags(flags: Partial<FeatureFlags>): Promise<FeatureFlags>;
+  patchFeatureFlags(flags: Partial<MobileFeatureFlags>): Promise<MobileFeatureFlags>;
 }

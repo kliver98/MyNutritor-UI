@@ -11,6 +11,7 @@
   import Alert from '$lib/ui/components/Alert.svelte';
   import Skeleton from '$lib/ui/components/Skeleton.svelte';
   import { ENV } from '$lib/core/config/env';
+  import type { User } from '$lib/domain/auth/User';
   import type { RestoreMode } from '$lib/domain/backup/Backup';
 
   let activeTab = $state<'users' | 'roles' | 'settings' | 'backups'>('users');
@@ -20,6 +21,33 @@
   let restoreMode = $state<RestoreMode>('ADD_NEW_ONLY');
   let restoreConfirmationText = $state('');
   let restoreJsonData = $state('');
+
+  // Delete user confirmation modal state
+  let isDeleteUserModalOpen = $state(false);
+  let userToDelete = $state<User | null>(null);
+  let isDeletingUser = $state(false);
+
+  function confirmDeleteUser(user: User) {
+    userToDelete = user;
+    isDeleteUserModalOpen = true;
+  }
+
+  async function handleExecuteDeleteUser() {
+    if (!userToDelete || isDeletingUser) return;
+    isDeletingUser = true;
+    try {
+      await adminStore.deleteUser(userToDelete.username);
+      isDeleteUserModalOpen = false;
+      userToDelete = null;
+    } finally {
+      isDeletingUser = false;
+    }
+  }
+
+  function cancelDeleteUser() {
+    isDeleteUserModalOpen = false;
+    userToDelete = null;
+  }
 
   onMount(() => {
     if ($isAdmin) {
@@ -144,21 +172,19 @@
           <p class="text-xs text-slate-500 py-4 text-center">No se encontraron usuarios.</p>
         {:else}
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
+            <table class="w-full text-left text-sm border-collapse">
               <thead
                 class="text-xs uppercase bg-slate-50 dark:bg-slate-800 text-slate-500 border-b border-slate-200 dark:border-slate-800"
               >
                 <tr>
                   <th class="py-3 px-4">Usuario</th>
-                  <th class="py-3 px-4">Email</th>
                   <th class="py-3 px-4">Rol</th>
-                  <th class="py-3 px-4">Creado</th>
                   <th class="py-3 px-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 {#each $adminStore.users as user (user.id)}
-                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                  <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                     <td class="py-3 px-4 font-semibold text-slate-900 dark:text-slate-100">
                       {user.username}
                       {#if user.fullName}
@@ -166,22 +192,19 @@
                         >
                       {/if}
                     </td>
-                    <td class="py-3 px-4 text-xs text-slate-500">{user.email}</td>
                     <td class="py-3 px-4">
                       <Badge variant={user.role === 'admin' ? 'warning' : 'neutral'} size="sm">
-                        {user.role}
+                        {user.role === 'admin' ? 'Admin' : 'User'}
                       </Badge>
-                    </td>
-                    <td class="py-3 px-4 text-xs text-slate-400">
-                      {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td class="py-3 px-4 text-right">
                       <button
                         type="button"
-                        onclick={() => adminStore.deleteUser(user.username)}
-                        class="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer"
+                        onclick={() => confirmDeleteUser(user)}
+                        class="text-red-500 hover:text-red-700 p-1 text-xs font-semibold cursor-pointer transition-colors"
+                        title="Eliminar usuario {user.username}"
                       >
-                        Eliminar
+                        🗑️ Eliminar
                       </button>
                     </td>
                   </tr>
@@ -251,72 +274,72 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Card
           title="Configuración de App Móvil"
-          subtitle="Parámetros de `/api/v1/app-settings/mobile`"
+          subtitle="Documento de Firestore: `app_settings/mobile`"
         >
           <div class="space-y-4">
             <Input
-              label="Versión Mínima Requerida"
-              value={$adminStore.mobileSettings?.minAppVersion || '1.0.0'}
+              label="Nombre de la Aplicación (appName)"
+              value={$adminStore.mobileSettings?.appName || 'MyNutritor'}
               disabled
             />
             <Input
-              label="Email de Soporte"
-              value={$adminStore.mobileSettings?.supportEmail || 'soporte@mynutritor.com'}
+              label="Versión Actual (currentVersion)"
+              value={$adminStore.mobileSettings?.currentVersion || 'v1.6.25'}
               disabled
             />
-            <div
-              class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between"
-            >
-              <div>
-                <p class="text-xs font-bold text-slate-900 dark:text-white">Modo Mantenimiento</p>
-                <p class="text-[11px] text-slate-500">
-                  Bloquea operaciones de escritura si está activo.
-                </p>
-              </div>
-              <Badge variant={$adminStore.mobileSettings?.maintenanceMode ? 'danger' : 'success'}>
-                {$adminStore.mobileSettings?.maintenanceMode ? 'Activado' : 'Inactivo'}
-              </Badge>
-            </div>
+            <Input
+              label="Tema por Defecto (defaultTheme)"
+              value={$adminStore.mobileSettings?.defaultTheme || 'LIGHT'}
+              disabled
+            />
           </div>
         </Card>
 
         <Card
           title="Banderas de Características (Feature Flags)"
-          subtitle="Interruptores de funcionalidad en tiempo real"
+          subtitle="Interruptores de funcionalidad móvil registrados en el backend"
         >
           <div class="space-y-3">
             <div
-              class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800"
+              class="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20"
             >
               <div>
-                <p class="text-xs font-bold">Nutricionista IA</p>
-                <p class="text-[11px] text-slate-400">
-                  Generación de sugerencias automáticas de recetas.
+                <p class="text-xs font-bold text-slate-900 dark:text-white">
+                  google_sign_in_enabled
+                </p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  Permite iniciar sesión con cuentas de Google en la app móvil.
                 </p>
               </div>
-              <Badge variant="success">Habilitado</Badge>
+              <Badge
+                variant={$adminStore.mobileSettings?.featureFlags?.google_sign_in_enabled
+                  ? 'success'
+                  : 'neutral'}
+              >
+                {$adminStore.mobileSettings?.featureFlags?.google_sign_in_enabled
+                  ? 'Habilitado'
+                  : 'Deshabilitado'}
+              </Badge>
             </div>
 
             <div
-              class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800"
+              class="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20"
             >
               <div>
-                <p class="text-xs font-bold">Escáner de Código de Barras</p>
-                <p class="text-[11px] text-slate-400">Búsqueda rápida por código en /foods.</p>
-              </div>
-              <Badge variant="success">Habilitado</Badge>
-            </div>
-
-            <div
-              class="flex items-center justify-between p-3 rounded-xl border border-slate-100 dark:border-slate-800"
-            >
-              <div>
-                <p class="text-xs font-bold">Recetas Comunitarias</p>
-                <p class="text-[11px] text-slate-400">
-                  Permite compartir recetas de forma pública.
+                <p class="text-xs font-bold text-slate-900 dark:text-white">work_offline_enabled</p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  Permite la sincronización y registro local sin conexión a internet.
                 </p>
               </div>
-              <Badge variant="success">Habilitado</Badge>
+              <Badge
+                variant={$adminStore.mobileSettings?.featureFlags?.work_offline_enabled
+                  ? 'success'
+                  : 'neutral'}
+              >
+                {$adminStore.mobileSettings?.featureFlags?.work_offline_enabled
+                  ? 'Habilitado'
+                  : 'Deshabilitado'}
+              </Badge>
             </div>
           </div>
         </Card>
@@ -473,6 +496,54 @@
       >
         Ejecutar Restauración
       </Button>
+    {/snippet}
+  </Modal>
+
+  <!-- Delete User Confirmation Modal -->
+  <Modal
+    open={isDeleteUserModalOpen}
+    title="¿Eliminar cuenta de usuario?"
+    subtitle="Esta acción no se puede deshacer"
+    onclose={cancelDeleteUser}
+  >
+    <div class="space-y-3">
+      <p class="text-sm text-slate-600 dark:text-slate-300">
+        ¿Estás seguro de que deseas eliminar permanentemente al usuario <strong
+          class="text-slate-900 dark:text-white">{userToDelete?.username}</strong
+        >?
+      </p>
+      {#if userToDelete?.fullName}
+        <p class="text-xs text-slate-500">
+          Nombre: <span class="font-medium text-slate-700 dark:text-slate-300"
+            >{userToDelete.fullName}</span
+          >
+        </p>
+      {/if}
+      <div
+        class="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 text-xs flex items-start gap-2"
+      >
+        <span>⚠️</span>
+        <span
+          >Se eliminarán permanentemente todos sus registros nutricionales, recetas y
+          configuraciones asociadas.</span
+        >
+      </div>
+    </div>
+
+    {#snippet footer()}
+      <div class="flex items-center justify-end gap-2">
+        <Button variant="ghost" size="sm" onclick={cancelDeleteUser}>
+          {$t('common.cancel')}
+        </Button>
+        <Button
+          variant="danger"
+          size="sm"
+          loading={isDeletingUser}
+          onclick={handleExecuteDeleteUser}
+        >
+          Eliminar usuario
+        </Button>
+      </div>
     {/snippet}
   </Modal>
 </div>

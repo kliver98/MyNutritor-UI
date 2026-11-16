@@ -1,5 +1,5 @@
-import type { MobileSettings, FeatureFlags } from '../../domain/settings/AppSettings';
-import { MobileSettingsDtoSchema, FeatureFlagsDtoSchema } from '../dtos/settings.dto';
+import type { MobileSettings, MobileFeatureFlags } from '../../domain/settings/AppSettings';
+import { MobileSettingsDtoSchema, MobileFeatureFlagsDtoSchema } from '../dtos/settings.dto';
 import { unwrapData } from './mapper-utils';
 
 export class AppSettingsMapper {
@@ -7,24 +7,24 @@ export class AppSettingsMapper {
     const unwrapped = unwrapData(raw);
     const parsed = MobileSettingsDtoSchema.parse(unwrapped);
     return {
-      minAppVersion: parsed.minAppVersion || parsed.min_app_version || '1.0.0',
-      forceUpdate: parsed.forceUpdate ?? parsed.force_update ?? false,
-      maintenanceMode: parsed.maintenanceMode ?? parsed.maintenance_mode ?? false,
-      supportEmail: parsed.supportEmail || parsed.support_email || 'soporte@mynutritor.com',
-      termsUrl: parsed.termsUrl || parsed.terms_url || '/terms',
-      privacyUrl: parsed.privacyUrl || parsed.privacy_url || '/privacy'
+      id: parsed.id || 'mobile',
+      appName: parsed.appName || 'MyNutritor',
+      currentVersion: parsed.currentVersion || 'v1.6.25',
+      defaultTheme: parsed.defaultTheme || 'LIGHT',
+      schemaVersion: parsed.schemaVersion,
+      featureFlags: {
+        google_sign_in_enabled: parsed.featureFlags.google_sign_in_enabled ?? true,
+        work_offline_enabled: parsed.featureFlags.work_offline_enabled ?? false
+      }
     };
   }
 
-  static toFeatureFlagsDomain(raw: unknown): FeatureFlags {
+  static toFeatureFlagsDomain(raw: unknown): MobileFeatureFlags {
     const unwrapped = unwrapData(raw);
-    const parsed = FeatureFlagsDtoSchema.parse(unwrapped);
+    const parsed = MobileFeatureFlagsDtoSchema.parse(unwrapped);
     return {
-      enableAiNutritionist: parsed.enableAiNutritionist ?? true,
-      enableBarcodeScanner: parsed.enableBarcodeScanner ?? true,
-      enableCommunityRecipes: parsed.enableCommunityRecipes ?? true,
-      enableExportPdfReports: parsed.enableExportPdfReports ?? true,
-      ...parsed
+      google_sign_in_enabled: parsed.google_sign_in_enabled ?? true,
+      work_offline_enabled: parsed.work_offline_enabled ?? false
     };
   }
 }
