@@ -104,7 +104,7 @@
 </script>
 
 <div
-  class="min-h-full flex flex-col transition-colors pb-16 md:pb-0"
+  class="min-h-full flex flex-col transition-colors pb-16 md:pb-0 w-full max-w-full overflow-x-hidden"
   class:text-white={$isCustomBgDark}
   class:text-slate-900={!$isCustomBgDark}
   class:dark:text-slate-100={!$customBgStore}
@@ -135,7 +135,7 @@
 
   <Navbar onopencommand={openCommand} />
 
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 min-w-0">
     {#if !isRouteAllowed}
       <div
         class="flex flex-col items-center justify-center min-h-[50vh] gap-3 text-center"

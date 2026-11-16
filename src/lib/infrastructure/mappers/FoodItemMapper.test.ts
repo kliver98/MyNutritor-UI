@@ -53,6 +53,8 @@ describe('FoodItemMapper', () => {
     expect(list[0].proteinGrams).toBe(13);
     expect(list[0].servingSize).toBe(100);
     expect(list[0].servingUnit).toBe('g');
+    expect(list[0].ownerUserId).toBe('system');
+    expect(list[0].isPublic).toBe(true);
   });
 
   it('debe redondear automáticamente a máximo 2 decimales números con artefactos de punto flotante de la API', () => {

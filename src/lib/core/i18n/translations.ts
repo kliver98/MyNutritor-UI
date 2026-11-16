@@ -151,7 +151,14 @@ export const es = {
       'Calcular calorías a partir de proteínas (4), carbohidratos (4) y grasas (9)',
     imageLabel: 'Imagen o Icono (URL o Emoji)',
     imageHelp:
-      'Pega el enlace a una imagen (se descarga en segundo plano) o escribe un emoji. Si no defines nada, mostrará 🥦 por defecto.'
+      'Pega el enlace a una imagen (se descarga en segundo plano) o escribe un emoji. Si no defines nada, mostrará 🥦 por defecto.',
+    systemBadge: 'Sistema',
+    systemTooltip: 'Alimento del catálogo general (solo lectura)',
+    cannotDeleteSystemTitle: 'Alimento del catálogo general',
+    cannotDeleteSystemDesc:
+      'Este alimento pertenece a la base de datos compartida y solo su creador o un Administrador pueden eliminarlo. Para no consumirlo en tus planes, puedes marcarlo como "Excluido de mi dieta".',
+    excludeFoodAction: 'Excluir de mi dieta',
+    sortBy: 'Ordenar por:'
   },
   recipes: {
     title: 'Recetario Nutricional',
@@ -450,7 +457,14 @@ export const en: typeof es = {
     calcFromMacrosTitle: 'Calculate calories from protein (4), carbs (4), and fats (9)',
     imageLabel: 'Image or Icon (URL or Emoji)',
     imageHelp:
-      'Paste an image link (downloads in the background) or type an emoji. If empty, defaults to 🥦.'
+      'Paste an image link (downloads in the background) or type an emoji. If empty, defaults to 🥦.',
+    systemBadge: 'System',
+    systemTooltip: 'System catalog food item (read-only)',
+    cannotDeleteSystemTitle: 'System Catalog Food',
+    cannotDeleteSystemDesc:
+      'This food belongs to the shared database and only its creator or an Administrator can delete it. To avoid consuming it in your plans, you can mark it as "Excluded from my diet".',
+    excludeFoodAction: 'Exclude from my diet',
+    sortBy: 'Sort by:'
   },
   recipes: {
     title: 'Recipe Book',

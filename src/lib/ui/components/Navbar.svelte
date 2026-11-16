@@ -34,11 +34,13 @@
 </script>
 
 <header
-  class="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xs"
+  class="sticky top-0 z-30 w-full max-w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xs"
 >
-  <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 flex items-center justify-between gap-3">
+  <div
+    class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-15 flex items-center justify-between gap-2 sm:gap-3"
+  >
     <!-- Brand Logo & Main Nav -->
-    <div class="flex items-center gap-4 lg:gap-6">
+    <div class="flex items-center gap-3 lg:gap-6 shrink-0">
       <a
         href={$isAuthenticated ? `${base}/dashboard` : `${base}/`}
         class="flex items-center gap-2 font-black text-base tracking-tight text-slate-900 dark:text-white group shrink-0"
@@ -263,11 +265,11 @@
     </div>
 
     <!-- Center/Right Search Pill (Command Palette Compact) -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <button
         type="button"
         onclick={onopencommand}
-        class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-xs cursor-pointer"
+        class="hidden md:inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-colors text-xs cursor-pointer"
         aria-label="Abrir barra de comandos rápidos"
       >
         <svg
@@ -297,14 +299,16 @@
 
       <!-- User Profile Capsule or Login Buttons -->
       {#if $isAuthenticated && $currentUser}
-        <div class="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+        <div
+          class="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-200 dark:border-slate-800 shrink-0"
+        >
           <a
             href="{base}/settings"
             title="Ajustes de usuario"
-            class="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+            class="flex items-center gap-2 p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group shrink-0"
           >
             <div
-              class="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-600 to-teal-400 text-white font-bold text-xs flex items-center justify-center uppercase shadow-2xs"
+              class="w-7 h-7 rounded-full bg-gradient-to-tr from-brand-600 to-teal-400 text-white font-bold text-xs flex items-center justify-center uppercase shadow-2xs shrink-0"
             >
               {($currentUser.fullName || $currentUser.username || 'U')[0]}
             </div>
@@ -322,11 +326,11 @@
             </div>
           </a>
 
-          <!-- Logout Icon Button -->
+          <!-- Logout Icon Button (Desktop only; on mobile available inside the hamburger menu and in settings) -->
           <button
             type="button"
             onclick={() => authStore.logout()}
-            class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+            class="hidden sm:inline-flex p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer shrink-0"
             title={$t('nav.logout')}
             aria-label={$t('nav.logout')}
           >
@@ -346,7 +350,7 @@
           </button>
         </div>
       {:else}
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-1.5 shrink-0">
           <a href="{base}/login">
             <Button variant="outline" size="sm">{$t('nav.login')}</Button>
           </a>
@@ -360,7 +364,7 @@
       <button
         type="button"
         onclick={toggleMobileMenu}
-        class="lg:hidden p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+        class="lg:hidden p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer shrink-0"
         aria-label="Abrir menú"
       >
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -474,7 +478,8 @@
         <div
           class="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center"
         >
-          <span class="text-xs text-slate-500">{$currentUser?.username} ({$currentUser?.role})</span
+          <span class="text-xs text-slate-500"
+            >{$currentUser?.username} ({$isAdmin ? 'Admin' : 'User'})</span
           >
           <Button variant="outline" size="sm" onclick={() => authStore.logout()}>
             {$t('nav.logout')}

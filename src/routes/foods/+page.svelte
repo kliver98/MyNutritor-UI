@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { foodsStore } from '$lib/application/foods/foods.store';
   import { t } from '$lib/core/i18n/i18n.store';
+  import { currentUser, isAdmin } from '$lib/application/auth/auth.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
   import Input from '$lib/ui/components/Input.svelte';
@@ -33,9 +34,25 @@
     }
   }
 
+  // Permisos: Determina si el usuario logueado puede editar o eliminar este alimento
+  function canModifyFood(food: FoodItem | null): boolean {
+    if (!food) return false;
+    if ($isAdmin) return true;
+    if (!food.ownerUserId) return true;
+    const uid = $currentUser?.userId || $currentUser?.id || $currentUser?.username;
+    return Boolean(
+      uid &&
+      (food.ownerUserId === uid ||
+        food.ownerUserId === $currentUser?.id ||
+        food.ownerUserId === $currentUser?.username ||
+        food.ownerUserId === $currentUser?.userId)
+    );
+  }
+
   // Delete modal state
   let foodToDelete = $state<FoodItem | null>(null);
   let isDeleteModalOpen = $state(false);
+  let isDeletingFood = $state(false);
 
   function confirmDeleteFood(food: FoodItem) {
     foodToDelete = food;
@@ -43,11 +60,25 @@
   }
 
   async function executeDeleteFood() {
+    if (!foodToDelete || isDeletingFood) return;
+    const targetFood = foodToDelete;
+    isDeletingFood = true;
+    try {
+      const ok = await foodsStore.deleteFood(targetFood.id);
+      if (ok) {
+        isDeleteModalOpen = false;
+        foodToDelete = null;
+      }
+    } finally {
+      isDeletingFood = false;
+    }
+  }
+
+  function handleExcludeFromModal() {
     if (!foodToDelete) return;
-    const id = foodToDelete.id;
+    foodsStore.toggleExclusion(foodToDelete.id);
     isDeleteModalOpen = false;
     foodToDelete = null;
-    await foodsStore.deleteFood(id);
   }
 
   function cancelDelete() {
@@ -165,10 +196,10 @@
   }
 </script>
 
-<div class="space-y-6">
+<div class="space-y-6 w-full max-w-full overflow-hidden min-w-0">
   <!-- Header & Primary Action in elevated card -->
   <div
-    class="rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+    class="rounded-2xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full max-w-full min-w-0"
   >
     <div>
       <h1 class="text-2xl font-black text-slate-900 dark:text-white">{$t('foods.title')}</h1>
@@ -183,7 +214,7 @@
 
   <!-- Search in elevated card -->
   <div
-    class="p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm"
+    class="p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm w-full max-w-full min-w-0"
   >
     <Input
       placeholder={$t('foods.searchPlaceholder')}
@@ -208,237 +239,405 @@
       onaction={openCreateDrawer}
     />
   {:else}
-    <Card>
-      <div class="overflow-x-auto rounded-xl">
-        <table class="w-full text-left text-sm border-collapse">
-          <thead
-            class="text-xs uppercase bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800"
+    <!-- Mobile Card View (< md) -->
+    <div class="space-y-3 md:hidden w-full max-w-full min-w-0">
+      <!-- Sort Bar on Mobile -->
+      <div
+        class="flex items-center justify-between text-xs px-1 text-slate-600 dark:text-slate-400"
+      >
+        <span class="font-semibold">{$t('foods.sortBy')}</span>
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            onclick={() => toggleSort('name')}
+            class="px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-colors {sortField ===
+            'name'
+              ? 'bg-brand-600 text-white border-brand-600 shadow-2xs'
+              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'}"
           >
-            <tr>
-              <th
-                class="py-3 px-4 min-w-[220px]"
-                aria-sort={sortField === 'name'
-                  ? sortDirection === 'asc'
-                    ? 'ascending'
-                    : 'descending'
-                  : undefined}
-              >
-                <button
-                  type="button"
-                  onclick={() => toggleSort('name')}
-                  class="group flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
-                >
-                  <span>{$t('foods.foodHeader')}</span>
-                  <span
-                    class="text-xs transition-opacity {sortField === 'name'
-                      ? 'text-slate-900 dark:text-white opacity-100 font-bold'
-                      : 'opacity-30 group-hover:opacity-75'}"
-                  >
-                    {sortField === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
-                  </span>
-                </button>
-              </th>
-              <th
-                class="py-3 px-4 min-w-[100px] whitespace-nowrap"
-                aria-sort={sortField === 'servingSize'
-                  ? sortDirection === 'asc'
-                    ? 'ascending'
-                    : 'descending'
-                  : undefined}
-              >
-                <button
-                  type="button"
-                  onclick={() => toggleSort('servingSize')}
-                  class="group flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
-                >
-                  <span>{$t('foods.portionHeader')}</span>
-                  <span
-                    class="text-xs transition-opacity {sortField === 'servingSize'
-                      ? 'text-slate-900 dark:text-white opacity-100 font-bold'
-                      : 'opacity-30 group-hover:opacity-75'}"
-                  >
-                    {sortField === 'servingSize' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
-                  </span>
-                </button>
-              </th>
-              <th
-                class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
-                aria-sort={sortField === 'calories'
-                  ? sortDirection === 'asc'
-                    ? 'ascending'
-                    : 'descending'
-                  : undefined}
-              >
-                <button
-                  type="button"
-                  onclick={() => toggleSort('calories')}
-                  class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
-                >
-                  <span>{$t('foods.caloriesHeader')}</span>
-                  <span
-                    class="text-xs transition-opacity {sortField === 'calories'
-                      ? 'text-slate-900 dark:text-white opacity-100 font-bold'
-                      : 'opacity-30 group-hover:opacity-75'}"
-                  >
-                    {sortField === 'calories' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
-                  </span>
-                </button>
-              </th>
-              <th
-                class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
-                aria-sort={sortField === 'proteinGrams'
-                  ? sortDirection === 'asc'
-                    ? 'ascending'
-                    : 'descending'
-                  : undefined}
-              >
-                <button
-                  type="button"
-                  onclick={() => toggleSort('proteinGrams')}
-                  class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
-                >
-                  <span>{$t('foods.proteinHeader')}</span>
-                  <span
-                    class="text-xs transition-opacity {sortField === 'proteinGrams'
-                      ? 'text-slate-900 dark:text-white opacity-100 font-bold'
-                      : 'opacity-30 group-hover:opacity-75'}"
-                  >
-                    {sortField === 'proteinGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
-                  </span>
-                </button>
-              </th>
-              <th
-                class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
-                aria-sort={sortField === 'carbsGrams'
-                  ? sortDirection === 'asc'
-                    ? 'ascending'
-                    : 'descending'
-                  : undefined}
-              >
-                <button
-                  type="button"
-                  onclick={() => toggleSort('carbsGrams')}
-                  class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
-                >
-                  <span>{$t('foods.carbsHeader')}</span>
-                  <span
-                    class="text-xs transition-opacity {sortField === 'carbsGrams'
-                      ? 'text-slate-900 dark:text-white opacity-100 font-bold'
-                      : 'opacity-30 group-hover:opacity-75'}"
-                  >
-                    {sortField === 'carbsGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
-                  </span>
-                </button>
-              </th>
-              <th
-                class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
-                aria-sort={sortField === 'fatsGrams'
-                  ? sortDirection === 'asc'
-                    ? 'ascending'
-                    : 'descending'
-                  : undefined}
-              >
-                <button
-                  type="button"
-                  onclick={() => toggleSort('fatsGrams')}
-                  class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
-                >
-                  <span>{$t('foods.fatsHeader')}</span>
-                  <span
-                    class="text-xs transition-opacity {sortField === 'fatsGrams'
-                      ? 'text-slate-900 dark:text-white opacity-100 font-bold'
-                      : 'opacity-30 group-hover:opacity-75'}"
-                  >
-                    {sortField === 'fatsGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
-                  </span>
-                </button>
-              </th>
-              <th class="py-3 px-4 min-w-[130px] text-center whitespace-nowrap"
-                >{$t('foods.exclusionHeader')}</th
-              >
-              <th class="py-3 px-4 min-w-[110px] text-right whitespace-nowrap"
-                >{$t('common.actions')}</th
-              >
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            {#each filteredFoods as food (food.id)}
-              {@const isExcluded = $foodsStore.excludedIds.includes(food.id)}
-              <tr
-                class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors {isExcluded
-                  ? 'opacity-60 bg-red-50/20'
-                  : ''}"
-              >
-                <td class="py-3 px-4">
-                  <div class="flex items-center gap-2.5">
-                    <FoodImage src={food.iconOrImageUrl} alt={food.name} size="md" />
-                    <div class="min-w-0">
-                      <div class="flex flex-wrap items-center gap-1.5">
-                        <span class="font-semibold text-slate-900 dark:text-slate-100"
-                          >{food.name}</span
-                        >
-                        {#if food.brand}
-                          <span class="text-xs font-normal text-slate-400">({food.brand})</span>
-                        {/if}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
-                  {formatNumber(food.servingSize)}
-                  {food.servingUnit}
-                </td>
-                <td class="py-3 px-4 text-right font-bold text-amber-600 whitespace-nowrap">
-                  {formatNumber(food.calories, 0)}
-                </td>
-                <td class="py-3 px-4 text-right font-medium text-blue-600 whitespace-nowrap">
-                  {formatGrams(food.proteinGrams)}
-                </td>
-                <td class="py-3 px-4 text-right font-medium text-emerald-600 whitespace-nowrap">
-                  {formatGrams(food.carbsGrams)}
-                </td>
-                <td class="py-3 px-4 text-right font-medium text-rose-600 whitespace-nowrap">
-                  {formatGrams(food.fatsGrams)}
-                </td>
+            A-Z {sortField === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </button>
+          <button
+            type="button"
+            onclick={() => toggleSort('calories')}
+            class="px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-colors {sortField ===
+            'calories'
+              ? 'bg-brand-600 text-white border-brand-600 shadow-2xs'
+              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'}"
+          >
+            kcal {sortField === 'calories' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </button>
+          <button
+            type="button"
+            onclick={() => toggleSort('proteinGrams')}
+            class="px-2 py-1 rounded-lg border text-xs font-semibold cursor-pointer transition-colors {sortField ===
+            'proteinGrams'
+              ? 'bg-brand-600 text-white border-brand-600 shadow-2xs'
+              : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'}"
+          >
+            Prot {sortField === 'proteinGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : ''}
+          </button>
+        </div>
+      </div>
 
-                <!-- Exclusion Toggle in 1 Click -->
-                <td class="py-3 px-4 text-center whitespace-nowrap">
+      {#each filteredFoods as food (food.id)}
+        {@const isExcluded = $foodsStore.excludedIds.includes(food.id)}
+        {@const canEditOrDelete = canModifyFood(food)}
+        <div
+          class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 w-full max-w-full min-w-0 {isExcluded
+            ? 'opacity-75 bg-red-50/20 dark:bg-red-950/10'
+            : ''}"
+        >
+          <div class="flex items-start justify-between gap-2.5">
+            <div class="flex items-center gap-3 min-w-0">
+              <FoodImage src={food.iconOrImageUrl} alt={food.name} size="md" />
+              <div class="min-w-0">
+                <h3 class="font-bold text-sm text-slate-900 dark:text-white truncate leading-tight">
+                  {food.name}
+                </h3>
+                {#if food.brand}
+                  <p class="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                    {food.brand}
+                  </p>
+                {/if}
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              {#if !canEditOrDelete}
+                <span
+                  class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500"
+                  title={$t('foods.systemTooltip')}
+                >
+                  🔒 {$t('foods.systemBadge')}
+                </span>
+              {/if}
+              <span
+                class="text-xs font-semibold px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                {formatNumber(food.servingSize)}
+                {food.servingUnit}
+              </span>
+            </div>
+          </div>
+
+          <!-- Macros 4 chips -->
+          <div
+            class="grid grid-cols-4 gap-1.5 text-center bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-xs"
+          >
+            <div>
+              <span class="block text-[10px] text-slate-400 font-medium uppercase tracking-wider"
+                >Kcal</span
+              >
+              <span class="font-bold text-amber-600 dark:text-amber-400"
+                >{formatNumber(food.calories, 0)}</span
+              >
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 font-medium uppercase tracking-wider"
+                >Prot</span
+              >
+              <span class="font-bold text-blue-600 dark:text-blue-400"
+                >{formatGrams(food.proteinGrams)}</span
+              >
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 font-medium uppercase tracking-wider"
+                >Carb</span
+              >
+              <span class="font-bold text-emerald-600 dark:text-emerald-400"
+                >{formatGrams(food.carbsGrams)}</span
+              >
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 font-medium uppercase tracking-wider"
+                >Grasa</span
+              >
+              <span class="font-bold text-rose-600 dark:text-rose-400"
+                >{formatGrams(food.fatsGrams)}</span
+              >
+            </div>
+          </div>
+
+          <!-- Bottom Action Bar -->
+          <div
+            class="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800/80"
+          >
+            <button
+              type="button"
+              onclick={() => foodsStore.toggleExclusion(food.id)}
+              class="px-2.5 py-1 rounded-lg border text-xs font-medium cursor-pointer transition-colors {isExcluded
+                ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300'}"
+              title={$t('foods.toggleExclusion')}
+            >
+              {isExcluded ? '🚫 Excluido' : '✓ Permitido'}
+            </button>
+
+            <div class="flex items-center gap-1">
+              {#if canEditOrDelete}
+                <Button variant="ghost" size="sm" onclick={() => openEditDrawer(food)}>
+                  {$t('common.edit')}
+                </Button>
+                <button
+                  type="button"
+                  onclick={() => confirmDeleteFood(food)}
+                  class="text-red-500 hover:text-red-700 p-1.5 text-xs cursor-pointer transition-colors"
+                  title="Eliminar alimento"
+                  aria-label="Eliminar alimento {food.name}"
+                >
+                  🗑️
+                </button>
+              {/if}
+            </div>
+          </div>
+        </div>
+      {/each}
+    </div>
+
+    <!-- Desktop Data Table (>= md) -->
+    <div class="hidden md:block w-full max-w-full min-w-0">
+      <Card class="w-full max-w-full overflow-hidden">
+        <div class="overflow-x-auto w-full max-w-full rounded-xl">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead
+              class="text-xs uppercase bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800"
+            >
+              <tr>
+                <th
+                  class="py-3 px-4 min-w-[220px]"
+                  aria-sort={sortField === 'name'
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : undefined}
+                >
                   <button
                     type="button"
-                    onclick={() => foodsStore.toggleExclusion(food.id)}
-                    class="p-1.5 rounded-lg border text-xs cursor-pointer transition-colors {isExcluded
-                      ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800'
-                      : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:border-slate-700'}"
-                    title={$t('foods.toggleExclusion')}
-                    aria-label="Alternar exclusión para {food.name}"
+                    onclick={() => toggleSort('name')}
+                    class="group flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
                   >
-                    {isExcluded ? '🚫 Excluido' : '✓ Permitido'}
+                    <span>{$t('foods.foodHeader')}</span>
+                    <span
+                      class="text-xs transition-opacity {sortField === 'name'
+                        ? 'text-slate-900 dark:text-white opacity-100 font-bold'
+                        : 'opacity-30 group-hover:opacity-75'}"
+                    >
+                      {sortField === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                    </span>
                   </button>
-                </td>
+                </th>
+                <th
+                  class="py-3 px-4 min-w-[100px] whitespace-nowrap"
+                  aria-sort={sortField === 'servingSize'
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : undefined}
+                >
+                  <button
+                    type="button"
+                    onclick={() => toggleSort('servingSize')}
+                    class="group flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
+                  >
+                    <span>{$t('foods.portionHeader')}</span>
+                    <span
+                      class="text-xs transition-opacity {sortField === 'servingSize'
+                        ? 'text-slate-900 dark:text-white opacity-100 font-bold'
+                        : 'opacity-30 group-hover:opacity-75'}"
+                    >
+                      {sortField === 'servingSize' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                    </span>
+                  </button>
+                </th>
+                <th
+                  class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
+                  aria-sort={sortField === 'calories'
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : undefined}
+                >
+                  <button
+                    type="button"
+                    onclick={() => toggleSort('calories')}
+                    class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
+                  >
+                    <span>{$t('foods.caloriesHeader')}</span>
+                    <span
+                      class="text-xs transition-opacity {sortField === 'calories'
+                        ? 'text-slate-900 dark:text-white opacity-100 font-bold'
+                        : 'opacity-30 group-hover:opacity-75'}"
+                    >
+                      {sortField === 'calories' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                    </span>
+                  </button>
+                </th>
+                <th
+                  class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
+                  aria-sort={sortField === 'proteinGrams'
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : undefined}
+                >
+                  <button
+                    type="button"
+                    onclick={() => toggleSort('proteinGrams')}
+                    class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
+                  >
+                    <span>{$t('foods.proteinHeader')}</span>
+                    <span
+                      class="text-xs transition-opacity {sortField === 'proteinGrams'
+                        ? 'text-slate-900 dark:text-white opacity-100 font-bold'
+                        : 'opacity-30 group-hover:opacity-75'}"
+                    >
+                      {sortField === 'proteinGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                    </span>
+                  </button>
+                </th>
+                <th
+                  class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
+                  aria-sort={sortField === 'carbsGrams'
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : undefined}
+                >
+                  <button
+                    type="button"
+                    onclick={() => toggleSort('carbsGrams')}
+                    class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
+                  >
+                    <span>{$t('foods.carbsHeader')}</span>
+                    <span
+                      class="text-xs transition-opacity {sortField === 'carbsGrams'
+                        ? 'text-slate-900 dark:text-white opacity-100 font-bold'
+                        : 'opacity-30 group-hover:opacity-75'}"
+                    >
+                      {sortField === 'carbsGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                    </span>
+                  </button>
+                </th>
+                <th
+                  class="py-3 px-4 min-w-[90px] text-right whitespace-nowrap"
+                  aria-sort={sortField === 'fatsGrams'
+                    ? sortDirection === 'asc'
+                      ? 'ascending'
+                      : 'descending'
+                    : undefined}
+                >
+                  <button
+                    type="button"
+                    onclick={() => toggleSort('fatsGrams')}
+                    class="group ml-auto flex items-center gap-1.5 font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer select-none"
+                  >
+                    <span>{$t('foods.fatsHeader')}</span>
+                    <span
+                      class="text-xs transition-opacity {sortField === 'fatsGrams'
+                        ? 'text-slate-900 dark:text-white opacity-100 font-bold'
+                        : 'opacity-30 group-hover:opacity-75'}"
+                    >
+                      {sortField === 'fatsGrams' ? (sortDirection === 'asc' ? '▲' : '▼') : '⇅'}
+                    </span>
+                  </button>
+                </th>
+                <th class="py-3 px-4 min-w-[130px] text-center whitespace-nowrap"
+                  >{$t('foods.exclusionHeader')}</th
+                >
+                <th class="py-3 px-4 min-w-[110px] text-right whitespace-nowrap"
+                  >{$t('common.actions')}</th
+                >
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              {#each filteredFoods as food (food.id)}
+                {@const isExcluded = $foodsStore.excludedIds.includes(food.id)}
+                {@const canEditOrDelete = canModifyFood(food)}
+                <tr
+                  class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors {isExcluded
+                    ? 'opacity-60 bg-red-50/20'
+                    : ''}"
+                >
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-2.5">
+                      <FoodImage src={food.iconOrImageUrl} alt={food.name} size="md" />
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                          <span class="font-semibold text-slate-900 dark:text-slate-100"
+                            >{food.name}</span
+                          >
+                          {#if food.brand}
+                            <span class="text-xs font-normal text-slate-400">({food.brand})</span>
+                          {/if}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
+                    {formatNumber(food.servingSize)}
+                    {food.servingUnit}
+                  </td>
+                  <td class="py-3 px-4 text-right font-bold text-amber-600 whitespace-nowrap">
+                    {formatNumber(food.calories, 0)}
+                  </td>
+                  <td class="py-3 px-4 text-right font-medium text-blue-600 whitespace-nowrap">
+                    {formatGrams(food.proteinGrams)}
+                  </td>
+                  <td class="py-3 px-4 text-right font-medium text-emerald-600 whitespace-nowrap">
+                    {formatGrams(food.carbsGrams)}
+                  </td>
+                  <td class="py-3 px-4 text-right font-medium text-rose-600 whitespace-nowrap">
+                    {formatGrams(food.fatsGrams)}
+                  </td>
 
-                <!-- Edit / Delete Actions -->
-                <td class="py-3 px-4 text-right whitespace-nowrap">
-                  <div class="inline-flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onclick={() => openEditDrawer(food)}>
-                      {$t('common.edit')}
-                    </Button>
+                  <!-- Exclusion Toggle in 1 Click -->
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
                     <button
                       type="button"
-                      onclick={() => confirmDeleteFood(food)}
-                      class="text-red-500 hover:text-red-700 p-1.5 text-xs cursor-pointer transition-colors"
-                      title="Eliminar alimento"
-                      aria-label="Eliminar alimento {food.name}"
+                      onclick={() => foodsStore.toggleExclusion(food.id)}
+                      class="p-1.5 rounded-lg border text-xs cursor-pointer transition-colors {isExcluded
+                        ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-800'
+                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-700 dark:bg-slate-800 dark:border-slate-700'}"
+                      title={$t('foods.toggleExclusion')}
+                      aria-label="Alternar exclusión para {food.name}"
                     >
-                      🗑️
+                      {isExcluded ? '🚫 Excluido' : '✓ Permitido'}
                     </button>
-                  </div>
-                </td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+                  </td>
+
+                  <!-- Edit / Delete Actions -->
+                  <td class="py-3 px-4 text-right whitespace-nowrap">
+                    {#if canEditOrDelete}
+                      <div class="inline-flex items-center gap-1">
+                        <Button variant="ghost" size="sm" onclick={() => openEditDrawer(food)}>
+                          {$t('common.edit')}
+                        </Button>
+                        <button
+                          type="button"
+                          onclick={() => confirmDeleteFood(food)}
+                          class="text-red-500 hover:text-red-700 p-1.5 text-xs cursor-pointer transition-colors"
+                          title="Eliminar alimento"
+                          aria-label="Eliminar alimento {food.name}"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    {:else}
+                      <span
+                        class="text-[11px] text-slate-400 dark:text-slate-500 font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800"
+                        title={$t('foods.systemTooltip')}
+                      >
+                        🔒 {$t('foods.systemBadge')}
+                      </span>
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
   {/if}
 
   <!-- Add/Edit Drawer -->
@@ -569,26 +768,40 @@
   <!-- Delete Food Confirmation Modal -->
   <Modal
     open={isDeleteModalOpen}
-    title={$t('foods.deleteFoodTitle')}
-    subtitle={$t('foods.deleteFoodSubtitle')}
+    title={canModifyFood(foodToDelete)
+      ? $t('foods.deleteFoodTitle')
+      : $t('foods.cannotDeleteSystemTitle')}
+    subtitle={canModifyFood(foodToDelete) ? $t('foods.deleteFoodSubtitle') : ''}
     onclose={cancelDelete}
   >
     <div class="space-y-3">
-      <p class="text-sm text-slate-600 dark:text-slate-300">
-        {$t('foods.deleteFoodQuestion', { name: foodToDelete?.name || '' })}
-      </p>
-      {#if foodToDelete?.brand}
-        <p class="text-xs text-slate-500 dark:text-slate-400">
-          {$t('foods.brand')}:
-          <span class="font-medium text-slate-700 dark:text-slate-300">{foodToDelete.brand}</span>
+      {#if canModifyFood(foodToDelete)}
+        <p class="text-sm text-slate-600 dark:text-slate-300">
+          {$t('foods.deleteFoodQuestion', { name: foodToDelete?.name || '' })}
         </p>
+        {#if foodToDelete?.brand}
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            {$t('foods.brand')}:
+            <span class="font-medium text-slate-700 dark:text-slate-300">{foodToDelete.brand}</span>
+          </p>
+        {/if}
+        <div
+          class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2"
+        >
+          <span>⚠️</span>
+          <span>{$t('foods.deleteFoodWarning')}</span>
+        </div>
+      {:else}
+        <p class="text-sm text-slate-600 dark:text-slate-300">
+          {$t('foods.cannotDeleteSystemDesc')}
+        </p>
+        <div
+          class="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300 text-xs flex items-start gap-2"
+        >
+          <span>ℹ️</span>
+          <span>{$t('foods.systemTooltip')}</span>
+        </div>
       {/if}
-      <div
-        class="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2"
-      >
-        <span>⚠️</span>
-        <span>{$t('foods.deleteFoodWarning')}</span>
-      </div>
     </div>
 
     {#snippet footer()}
@@ -596,9 +809,15 @@
         <Button variant="ghost" size="sm" onclick={cancelDelete}>
           {$t('common.cancel')}
         </Button>
-        <Button variant="danger" size="sm" onclick={executeDeleteFood}
-          >{$t('foods.deleteFoodAction')}</Button
-        >
+        {#if canModifyFood(foodToDelete)}
+          <Button variant="danger" size="sm" onclick={executeDeleteFood} disabled={isDeletingFood}>
+            {isDeletingFood ? $t('common.loading') : $t('foods.deleteFoodAction')}
+          </Button>
+        {:else}
+          <Button variant="primary" size="sm" onclick={handleExcludeFromModal}>
+            {$t('foods.excludeFoodAction')}
+          </Button>
+        {/if}
       </div>
     {/snippet}
   </Modal>

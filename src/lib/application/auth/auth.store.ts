@@ -182,4 +182,10 @@ export const isAuthenticated = derived(authStore, ($auth) => !!$auth.token && !!
 
 export const currentUser = derived(authStore, ($auth) => $auth.user);
 
-export const isAdmin = derived(authStore, ($auth) => $auth.user?.role?.toLowerCase() === 'admin');
+export const isAdmin = derived(
+  authStore,
+  ($auth) =>
+    $auth.user?.role?.toLowerCase() === 'admin' ||
+    $auth.user?.roleId === '1' ||
+    String($auth.user?.role) === '1'
+);

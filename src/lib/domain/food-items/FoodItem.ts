@@ -13,6 +13,8 @@ export interface FoodItem {
   category?: string;
   barcode?: string;
   isVerified?: boolean;
+  ownerUserId?: string;
+  isPublic?: boolean;
   iconOrImageUrl?: string;
 }
 

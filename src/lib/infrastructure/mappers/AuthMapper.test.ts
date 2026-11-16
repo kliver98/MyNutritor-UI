@@ -80,6 +80,40 @@ describe('AuthMapper', () => {
     expect(session.user.username).toBe('testU');
     expect(session.user.email).toBe('');
     expect(session.user.role).toBe('user');
+    expect(session.user.roleId).toBe('2');
     expect(session.user.isActive).toBe(true);
+  });
+
+  it('debe mapear correctamente usuarios con roleId "1" o 1 como Administrador aunque role no esté presente', () => {
+    // Caso 1: roleId como string '1' sin campo role
+    const adminWithRoleIdStr = {
+      id: 'admin_1',
+      username: 'kliver_admin',
+      roleId: '1'
+    };
+    const userDomain1 = AuthMapper.toUserDomain(adminWithRoleIdStr);
+    expect(userDomain1.role).toBe('admin');
+    expect(userDomain1.roleId).toBe('1');
+
+    // Caso 2: roleId como number 1
+    const adminWithRoleIdNum = {
+      id: 'admin_2',
+      username: 'boss',
+      roleId: 1
+    };
+    const userDomain2 = AuthMapper.toUserDomain(adminWithRoleIdNum);
+    expect(userDomain2.role).toBe('admin');
+    expect(userDomain2.roleId).toBe('1');
+
+    // Caso 3: roleId como string '1' y role como '1'
+    const adminFull = {
+      id: 'admin_3',
+      username: 'superadmin',
+      roleId: '1',
+      role: '1'
+    };
+    const userDomain3 = AuthMapper.toUserDomain(adminFull);
+    expect(userDomain3.role).toBe('admin');
+    expect(userDomain3.roleId).toBe('1');
   });
 });

@@ -89,6 +89,8 @@ export class FoodItemMapper {
       category,
       barcode: parsed.barcode,
       isVerified: parsed.isVerified ?? parsed.is_verified ?? false,
+      ownerUserId: parsed.ownerUserId || undefined,
+      isPublic: parsed.isPublic ?? true,
       iconOrImageUrl:
         parsed.iconOrImageUrl ||
         parsed.icon_or_image_url ||

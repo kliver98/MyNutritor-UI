@@ -124,7 +124,7 @@ function createFoodsStore() {
       }
     },
 
-    async deleteFood(foodId: string) {
+    async deleteFood(foodId: string): Promise<boolean> {
       const current = get(foodsStore);
       const prevItems = current.items;
       update((s) => ({ ...s, items: s.items.filter((item) => item.id !== foodId) }));
@@ -132,9 +132,11 @@ function createFoodsStore() {
       try {
         await repositories.foodItems.delete(foodId);
         toastStore.success('Alimento eliminado');
+        return true;
       } catch (err: unknown) {
         update((s) => ({ ...s, items: prevItems }));
         toastStore.error((err as Error)?.message || 'Error al eliminar alimento');
+        return false;
       }
     },
 

@@ -7,18 +7,33 @@ export class AuthMapper {
     const unwrapped = unwrapData(raw);
     const parsed = UserDtoSchema.parse(unwrapped);
 
-    // Normalizar rol: '1' -> 'admin', 'admin' -> 'admin', '2' o cualquier otro -> 'user'
-    const rawRole = String(parsed.role ?? parsed.roleId ?? 'user').toLowerCase();
-    const normalizedRole: UserRole = rawRole === 'admin' || rawRole === '1' ? 'admin' : 'user';
+    // Normalizar rol: en la base de datos es roleId '1' (Admin) y '2' (User)
+    // Puede venir como roleId o role (string o number, ej. '1', 1, 'admin', '2', 2, 'user')
+    const rawRoleId =
+      parsed.roleId !== undefined && parsed.roleId !== null
+        ? String(parsed.roleId).trim().toLowerCase()
+        : undefined;
+    const rawRole =
+      parsed.role !== undefined && parsed.role !== null
+        ? String(parsed.role).trim().toLowerCase()
+        : undefined;
+
+    const isAdmin =
+      rawRoleId === '1' || rawRoleId === 'admin' || rawRole === '1' || rawRole === 'admin';
+
+    const normalizedRole: UserRole = isAdmin ? 'admin' : 'user';
+    const normalizedRoleId: string = isAdmin ? '1' : rawRoleId || '2';
 
     const id = parsed.id || parsed.userId || parsed.username || 'user';
 
     return {
       id,
+      userId: parsed.userId || undefined,
       username: parsed.username,
       email: parsed.email || '',
       fullName: parsed.fullName || parsed.full_name || undefined,
       role: normalizedRole,
+      roleId: normalizedRoleId,
       isActive: parsed.isActive ?? parsed.is_active ?? true,
       createdAt: parsed.createdAt || parsed.created_at || new Date().toISOString(),
       updatedAt: parsed.updatedAt || parsed.updated_at || undefined

@@ -2,10 +2,12 @@ export type UserRole = 'admin' | 'user';
 
 export interface User {
   id: string;
+  userId?: string;
   username: string;
   email: string;
   fullName?: string;
   role: UserRole;
+  roleId?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;

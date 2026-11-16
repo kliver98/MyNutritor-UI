@@ -19,7 +19,7 @@ export const UserDtoSchema = z
     email: z.string().optional().default(''),
     full_name: z.string().nullable().optional(),
     fullName: z.string().nullable().optional(),
-    role: UserRoleDtoSchema.optional().default('user'),
+    role: UserRoleDtoSchema.optional(),
     roleId: z.union([z.string(), z.number()]).optional(),
     is_active: z.boolean().optional(),
     isActive: z.boolean().optional(),
