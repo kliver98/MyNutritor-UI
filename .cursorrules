@@ -1,0 +1,19 @@
+# Cursor Rules - MyNutritor UI
+
+# ==============================================================================
+# MANDATORY SELF-INJECTION DIRECTIVE
+# Before writing or modifying any code in this repository, you MUST inspect and
+# follow the modular skills in the .agent/skills/ directory:
+#   - .agent/skills/architecture-and-cleancode.md
+#   - .agent/skills/adding-new-features.md
+#   - .agent/skills/testing-standards.md
+# ==============================================================================
+
+- Framework: SvelteKit + TypeScript (strict mode enabled).
+- Styling: Tailwind CSS (with dynamic light/dark mode support).
+- Validation: Zod for all DTOs and API payload boundaries.
+- Architecture: Feature-Sliced / Clean Architecture (core, domain, infrastructure, application, ui).
+- Never make direct `fetch()` calls in UI components. Always use the repository pattern via `IHttpClient`.
+- Enforce strict separation: DTOs must be parsed with Zod and converted via Data Mappers before reaching the domain or UI.
+- Static SPA export configured for GitHub Pages with `@sveltejs/adapter-static`.
+- Always write/update tests when adding or updating features.

@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+/* Smooth color transitions for dark mode toggle */
+html.transitioning,
+html.transitioning *,
+html.transitioning *:before,
+html.transitioning *:after {
+  transition: all 150ms ease-in-out !important;
+  transition-delay: 0 !important;
+}
