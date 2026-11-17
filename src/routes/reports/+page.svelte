@@ -1,30 +1,45 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { base } from '$app/paths';
-  import { goto } from '$app/navigation';
+  import { onMount, tick } from 'svelte';
   import { reportsStore } from '$lib/application/reports/reports.store';
+  import { currentUser } from '$lib/application/auth/auth.store';
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
-  import Input from '$lib/ui/components/Input.svelte';
-  import Modal from '$lib/ui/components/Modal.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import Skeleton from '$lib/ui/components/Skeleton.svelte';
   import CalorieTrendChart from '$lib/ui/features/reports/CalorieTrendChart.svelte';
   import MacroTrendChart from '$lib/ui/features/reports/MacroTrendChart.svelte';
   import MacroDistributionChart from '$lib/ui/features/reports/MacroDistributionChart.svelte';
   import DailyBreakdownTable from '$lib/ui/features/reports/DailyBreakdownTable.svelte';
-  import { getLocalDateStr, getPastDateStr, formatDisplayDate } from '$lib/core/utils/format';
+  import FoodLogReport from '$lib/ui/features/reports/FoodLogReport.svelte';
+  import DateRangePicker from '$lib/ui/components/DateRangePicker.svelte';
+  import { getPresetStartDate } from '$lib/core/utils/calendar';
+  import {
+    getLocalDateStr,
+    formatDisplayDate,
+    formatCurrentPrintDateTime
+  } from '$lib/core/utils/format';
 
-  let isModalOpen = $state(false);
-  let saveTitle = $state('');
   let activePreset = $state<'7' | '14' | '30' | 'all' | 'custom'>('7');
 
-  let startDate = $state(getPastDateStr(7));
+  let startDate = $state(getPresetStartDate(getLocalDateStr(), 7));
   let endDate = $state(getLocalDateStr());
 
   onMount(() => {
     reportsStore.fetchData(startDate, endDate);
+
+    const handleAfterPrint = () => {
+      if (typeof document !== 'undefined') {
+        document.body.classList.remove('print-mode-full', 'print-mode-food-only');
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('afterprint', handleAfterPrint);
+      return () => {
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+    }
   });
 
   function applyPreset(days: '7' | '14' | '30' | 'all') {
@@ -33,58 +48,88 @@
     if (days === 'all') {
       startDate = '2020-01-01';
     } else {
-      startDate = getPastDateStr(Number(days));
+      startDate = getPresetStartDate(endDate, Number(days));
     }
     reportsStore.setDateRange(startDate, endDate);
   }
 
-  function handleCustomDateChange() {
+  function handleCustomRangeApplied(start: string, end: string) {
     activePreset = 'custom';
-    reportsStore.setDateRange(startDate, endDate);
+    startDate = start;
+    endDate = end;
+    reportsStore.setDateRange(start, end);
   }
 
-  async function handleSaveReport(e: SubmitEvent) {
-    e.preventDefault();
-    await reportsStore.saveCurrentReport(saveTitle);
-    isModalOpen = false;
-    saveTitle = '';
-  }
-
-  function handlePrint() {
-    if (typeof window !== 'undefined') window.print();
+  async function handlePrintFull() {
+    if (typeof document !== 'undefined') {
+      document.body.classList.remove('print-mode-food-only');
+      document.body.classList.add('print-mode-full');
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('prepare-full-print'));
+    }
+    await tick();
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.print();
+      }, 150);
+    }
   }
 
   const calculated = $derived($reportsStore.currentCalculated);
+  const profileName = $derived(
+    $currentUser?.fullName || $currentUser?.username || 'Usuario MyNutritor'
+  );
 </script>
 
 <div class="space-y-6">
-  <!-- Top Header & Actions -->
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-black text-slate-900 dark:text-white">
-        {$t('reports.title')}
-      </h1>
-      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-        {$t('reports.subtitle')}
-      </p>
+  <!-- ENCABEZADO DE IMPRESIÓN DEL REPORTE COMPLETO (Visible ÚNICAMENTE en impresión del botón 1) -->
+  <div class="hidden print:block mb-6 pb-4 border-b-2 border-slate-900 text-slate-900 print-full-only">
+    <div class="flex items-start justify-between">
+      <div>
+        <h1 class="text-2xl font-black uppercase tracking-tight">
+          MyNutritor • Reporte Nutricional y Adherencia
+        </h1>
+        <p class="text-sm font-semibold mt-1">
+          Perfil del Reporte: <span class="font-bold">{profileName}</span>
+        </p>
+      </div>
+      <div class="text-right text-xs text-slate-600 space-y-1">
+        <p><b>Generado:</b> {formatCurrentPrintDateTime()}</p>
+        <p><b>Período Analizado:</b> {formatDisplayDate(startDate)} al {formatDisplayDate(endDate)}</p>
+        <p><b>Días con registro:</b> {calculated?.daysWithData ?? 0} de {calculated?.daysInRange ?? 0} días</p>
+      </div>
     </div>
-    <div class="flex items-center gap-2">
-      <Button variant="outline" size="sm" onclick={handlePrint}>
-        🖨️ {$t('reports.printBtn')}
-      </Button>
-      <Button
-        variant="primary"
-        size="sm"
-        disabled={!calculated || calculated.daysWithData === 0}
-        onclick={() => (isModalOpen = true)}
+  </div>
+
+  <!-- Top Header & Actions (Tarjeta elevada con alto contraste y consistencia visual) -->
+  <div
+    class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs print:hidden"
+  >
+    <div class="flex items-center gap-3.5">
+      <div
+        class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-2xl shrink-0 shadow-2xs"
       >
-        💾 Guardar Reporte
+        📊
+      </div>
+      <div>
+        <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          {$t('reports.title')}
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-0.5 font-medium">
+          {$t('reports.subtitle')}
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <Button variant="outline" size="sm" onclick={handlePrintFull}>
+        🖨️ {$t('reports.printBtn')}
       </Button>
     </div>
   </div>
 
   <!-- Date Range Filter Bar (Default 7 days) -->
-  <Card>
+  <Card class="print:hidden">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <!-- Quick Range Presets -->
       <div class="flex flex-wrap items-center gap-2">
@@ -131,245 +176,161 @@
         </button>
       </div>
 
-      <!-- Manual Date Inputs -->
-      <div class="flex items-center gap-2 text-xs">
-        <div class="flex items-center gap-1.5">
-          <label for="rep-start-date" class="text-slate-500">Desde:</label>
-          <input
-            id="rep-start-date"
-            type="date"
-            bind:value={startDate}
-            onchange={handleCustomDateChange}
-            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-        <div class="flex items-center gap-1.5">
-          <label for="rep-end-date" class="text-slate-500">Hasta:</label>
-          <input
-            id="rep-end-date"
-            type="date"
-            bind:value={endDate}
-            onchange={handleCustomDateChange}
-            class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-      </div>
+      <!-- Custom Date Range Calendar Picker (Tipo Booking / Aerolíneas) -->
+      <DateRangePicker
+        bind:startDate
+        bind:endDate
+        maxDays={60}
+        label="Personalizado:"
+        isActive={activePreset === 'custom'}
+        onchange={handleCustomRangeApplied}
+      />
     </div>
   </Card>
 
-  <!-- Loading State -->
-  {#if $reportsStore.isLoading && !calculated}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  <!-- Content Loading vs Empty vs Data View -->
+  {#if $reportsStore.isLoading}
+    <div class="space-y-4">
       <Skeleton height="h-28" />
-      <Skeleton height="h-28" />
-      <Skeleton height="h-28" />
-      <Skeleton height="h-28" />
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Skeleton height="h-64" />
+        <Skeleton height="h-64" />
+      </div>
     </div>
   {:else if !calculated || calculated.daysWithData === 0}
-    <!-- Empty state for the date range -->
     <EmptyState
-      title="No hay registros nutricionales en este rango"
-      description="No se encontraron días con consumo registrado entre {formatDisplayDate(
-        startDate
-      )} y {formatDisplayDate(
-        endDate
-      )}. Prueba seleccionando otro rango de fechas o registra tus alimentos en el Dashboard."
-      icon="📈"
-      actionLabel="Ir al Dashboard a Registrar"
-      onaction={() => goto(`${base}/dashboard`)}
+      title={$t('reports.emptyTitle')}
+      description="No se encontraron registros nutricionales en el rango de fechas seleccionado."
+      icon="📊"
+      actionLabel="Ver últimos 7 días"
+      onaction={() => applyPreset('7')}
     />
   {:else}
-    <!-- Real KPI Cards based on API data -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Promedio Calorías -->
-      <Card class="border-t-4 border-t-amber-500">
-        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
-          <span>PROMEDIO CALORÍAS</span>
-          <span
-            class="px-2 py-0.5 rounded-full text-amber-600 bg-amber-50 dark:bg-amber-950/60 font-mono"
-          >
-            {calculated.adherencePercent}% meta
-          </span>
-        </div>
-        <p class="text-3xl font-black text-slate-900 dark:text-white mt-2">
-          {calculated.summary.averageCalories}
-          <span class="text-xs text-slate-400 font-normal">kcal/día</span>
-        </p>
-        <p class="text-[11px] text-slate-500 mt-1">
-          Meta promedio: {calculated.targets.targetCalories} kcal ({calculated.daysWithData}
-          {calculated.daysWithData === 1 ? 'día registrado' : 'días registrados'})
-        </p>
-      </Card>
+    <!-- SECCIÓN DE ANALÍTICA Y ADHERENCIA (Visible en pantalla y al imprimir con el Botón 1 de Reporte Completo) -->
+    <div class="print-full-only space-y-6">
+      <!-- Summary Metric KPI Cards (4 cards) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 print:grid print:grid-cols-4 print:gap-3">
+        <!-- Promedio Calorías -->
+        <Card class="border-t-4 border-t-amber-500 print:border print:border-slate-300 print:shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+              >Promedio Calórico</span
+            >
+            <span
+              class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600"
+            >
+              {calculated.summary.averageCalories} kcal
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
+            {calculated.summary.averageCalories}
+            <span class="text-xs font-normal text-slate-400">/ día</span>
+          </p>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Meta objetivo: {calculated.targets.targetCalories} kcal
+          </p>
+        </Card>
 
-      <!-- Promedio Proteína -->
-      <Card class="border-t-4 border-t-blue-500">
-        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
-          <span>PROMEDIO PROTEÍNA</span>
-          <span class="text-blue-500">🥩</span>
-        </div>
-        <p class="text-3xl font-black text-slate-900 dark:text-white mt-2">
-          {calculated.summary.averageProtein}g
-          <span class="text-xs text-slate-400 font-normal">/día</span>
-        </p>
-        <p class="text-[11px] text-slate-500 mt-1">
-          Meta promedio: {calculated.targets.targetProtein}g
-        </p>
-      </Card>
+        <!-- Promedio Proteína -->
+        <Card class="border-t-4 border-t-blue-500 print:border print:border-slate-300 print:shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+              >Promedio Proteína</span
+            >
+            <span
+              class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600"
+            >
+              {calculated.summary.averageProtein}g
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
+            {calculated.summary.averageProtein}g
+            <span class="text-xs font-normal text-slate-400">/ día</span>
+          </p>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Meta objetivo: {calculated.targets.targetProtein}g
+          </p>
+        </Card>
 
-      <!-- Promedio Carbohidratos -->
-      <Card class="border-t-4 border-t-emerald-500">
-        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
-          <span>PROMEDIO CARBOS</span>
-          <span class="text-emerald-500">🌾</span>
-        </div>
-        <p class="text-3xl font-black text-slate-900 dark:text-white mt-2">
-          {calculated.summary.averageCarbs}g
-          <span class="text-xs text-slate-400 font-normal">/día</span>
-        </p>
-        <p class="text-[11px] text-slate-500 mt-1">
-          Meta promedio: {calculated.targets.targetCarbs}g
-        </p>
-      </Card>
+        <!-- Promedio Carbos -->
+        <Card class="border-t-4 border-t-emerald-500 print:border print:border-slate-300 print:shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+              >Promedio Carbos</span
+            >
+            <span
+              class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600"
+            >
+              {calculated.summary.averageCarbs}g
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
+            {calculated.summary.averageCarbs}g
+            <span class="text-xs font-normal text-slate-400">/ día</span>
+          </p>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Meta objetivo: {calculated.targets.targetCarbs}g
+          </p>
+        </Card>
 
-      <!-- Promedio Grasas -->
-      <Card class="border-t-4 border-t-rose-500">
-        <div class="flex items-center justify-between text-xs font-bold text-slate-500">
-          <span>PROMEDIO GRASAS</span>
-          <span class="text-rose-500">🥑</span>
-        </div>
-        <p class="text-3xl font-black text-slate-900 dark:text-white mt-2">
-          {calculated.summary.averageFats}g
-          <span class="text-xs text-slate-400 font-normal">/día</span>
-        </p>
-        <p class="text-[11px] text-slate-500 mt-1">
-          Meta promedio: {calculated.targets.targetFats}g
-        </p>
-      </Card>
-    </div>
-
-    <!-- Charts Section: Calorie Evolution & Macro Breakdown -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 space-y-2">
-        <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
-          Evolución Calórica vs Meta ({formatDisplayDate(calculated.periodStart)} al {formatDisplayDate(
-            calculated.periodEnd
-          )})
-        </h3>
-        <CalorieTrendChart
-          records={calculated.dailyRecords}
-          targetCalories={calculated.targets.targetCalories}
-        />
+        <!-- Adherencia al Plan -->
+        <Card class="border-t-4 border-t-purple-500 print:border print:border-slate-300 print:shadow-none">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Adherencia</span>
+            <span
+              class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600"
+            >
+              {calculated.adherencePercent}%
+            </span>
+          </div>
+          <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-2">
+            {calculated.adherencePercent}%
+          </p>
+          <p class="text-[11px] text-slate-400 mt-1">
+            {calculated.daysWithData} de {calculated.daysInRange} días registrados
+          </p>
+        </Card>
       </div>
 
-      <div class="space-y-2">
-        <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
-          Distribución de Macronutrientes
-        </h3>
-        <MacroDistributionChart
-          avgProtein={calculated.summary.averageProtein}
-          avgCarbs={calculated.summary.averageCarbs}
-          avgFats={calculated.summary.averageFats}
-        />
+      <!-- Charts Section (Gráficos Interactivos) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 print:grid print:grid-cols-2 print:gap-4 print:break-inside-avoid">
+        <div class="space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
+            Tendencia de Calorías vs Meta
+          </h3>
+          <CalorieTrendChart
+            records={calculated.dailyRecords}
+            targetCalories={calculated.targets.targetCalories}
+          />
+        </div>
+
+        <div class="space-y-2">
+          <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
+            Distribución de Macronutrientes
+          </h3>
+          <MacroDistributionChart
+            avgProtein={calculated.summary.averageProtein}
+            avgCarbs={calculated.summary.averageCarbs}
+            avgFats={calculated.summary.averageFats}
+          />
+        </div>
       </div>
-    </div>
 
-    <!-- Daily Macronutrients Chart -->
-    <div class="space-y-2">
-      <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
-        Consumo Diario de Macronutrientes (Proteína, Carbohidratos y Grasas)
-      </h3>
-      <MacroTrendChart records={calculated.dailyRecords} />
-    </div>
+      <!-- Daily Macronutrients Chart -->
+      <div class="space-y-2 print:break-inside-avoid">
+        <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
+          Consumo Diario de Macronutrientes (Proteína, Carbohidratos y Grasas)
+        </h3>
+        <MacroTrendChart records={calculated.dailyRecords} />
+      </div>
 
-    <!-- Daily Breakdown Table -->
-    <DailyBreakdownTable records={calculated.dailyRecords} />
-  {/if}
-
-  <!-- Archived Reports Section from Backend -->
-  {#if $reportsStore.reports.length > 0}
-    <div class="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-3">
-      <h3 class="font-bold text-base text-slate-900 dark:text-white">
-        Informes Guardados en el Servidor ({$reportsStore.reports.length})
-      </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {#each $reportsStore.reports as rep (rep.id)}
-          <Card>
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <h4 class="font-bold text-sm text-slate-900 dark:text-white">{rep.title}</h4>
-                <p class="text-xs text-slate-400 mt-0.5">
-                  Período: {formatDisplayDate(rep.periodStart)} al {formatDisplayDate(
-                    rep.periodEnd
-                  )}
-                </p>
-              </div>
-              <button
-                type="button"
-                onclick={() => reportsStore.deleteReport(rep.id)}
-                class="text-rose-500 hover:text-rose-700 text-xs cursor-pointer font-medium"
-              >
-                {$t('common.delete')}
-              </button>
-            </div>
-            {#if rep.summary && rep.summary.averageCalories > 0}
-              <div
-                class="grid grid-cols-4 gap-1 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-center text-[11px]"
-              >
-                <div>
-                  <span class="text-slate-400 block">Calorías</span>
-                  <b class="text-amber-600 font-mono">{rep.summary.averageCalories}</b>
-                </div>
-                <div>
-                  <span class="text-slate-400 block">Proteína</span>
-                  <b class="text-blue-600 font-mono">{rep.summary.averageProtein}g</b>
-                </div>
-                <div>
-                  <span class="text-slate-400 block">Carbos</span>
-                  <b class="text-emerald-600 font-mono">{rep.summary.averageCarbs}g</b>
-                </div>
-                <div>
-                  <span class="text-slate-400 block">Grasas</span>
-                  <b class="text-rose-600 font-mono">{rep.summary.averageFats}g</b>
-                </div>
-              </div>
-            {/if}
-          </Card>
-        {/each}
+      <!-- Daily Breakdown Table -->
+      <div class="print:block print:break-inside-avoid">
+        <DailyBreakdownTable records={calculated.dailyRecords} />
       </div>
     </div>
   {/if}
 
-  <!-- Save Report Modal -->
-  <Modal
-    open={isModalOpen}
-    title="Guardar Informe en el Servidor"
-    onclose={() => (isModalOpen = false)}
-  >
-    <form id="save-report-form" onsubmit={handleSaveReport} class="space-y-4">
-      <Input
-        label="Título del Informe"
-        placeholder="ej. Informe Semanal {formatDisplayDate(startDate)} - {formatDisplayDate(
-          endDate
-        )}"
-        bind:value={saveTitle}
-        required
-      />
-      <div
-        class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-xs text-slate-600 dark:text-slate-400 space-y-1"
-      >
-        <p><b>Período:</b> {formatDisplayDate(startDate)} al {formatDisplayDate(endDate)}</p>
-        <p><b>Días con registro:</b> {calculated?.daysWithData || 0}</p>
-        <p><b>Promedio calórico:</b> {calculated?.summary.averageCalories || 0} kcal</p>
-      </div>
-    </form>
-
-    {#snippet footer()}
-      <Button variant="outline" size="sm" onclick={() => (isModalOpen = false)}>
-        {$t('common.cancel')}
-      </Button>
-      <Button type="submit" form="save-report-form" variant="primary" size="sm">
-        {$t('common.confirm')}
-      </Button>
-    {/snippet}
-  </Modal>
+  <!-- SECCIÓN: REPORTE DETALLADO DE COMIDAS REGISTRADAS (Reemplaza 'Informes Guardados') -->
+  <FoodLogReport />
 </div>

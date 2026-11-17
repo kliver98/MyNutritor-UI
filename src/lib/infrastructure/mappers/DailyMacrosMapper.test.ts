@@ -86,6 +86,51 @@ describe('ReportsMapper & UserSettingsMapper', () => {
     expect(report.summary.averageProtein).toBe(155);
   });
 
+  it('debe mapear reportes de Firestore con fullContent Markdown y timestamp DD/MM/YYYY HH:mm', () => {
+    const rawFirestoreDoc = {
+      id: '04055f6d-f201-4491-b60b-2d480414cc4d',
+      title: 'Desayuno ',
+      timestamp: '01/11/2026 09:40',
+      fullContent: `### 🥗 NOMBRE DEL ALIMENTO
+Desayuno
+
+---
+
+### 📊 INFORMACIÓN NUTRICIONAL ESTIMADA
+- **Proteínas:** 46 g
+- **Grasas:** 37 g
+- **Carbohidratos:** 42 g
+- **Calorías Totales:** 692 Kcal
+
+---
+
+### 💡 EVALUACIÓN Y RECOMENDACIONES
+NOMBRE DEL PLATO REGISTRADO: Desayuno
+
+RESUMEN DE MACRONUTRIENTES Y CALORÍAS CALCULADAS:
+- Calorías Totales: 692 Kcal
+- Proteínas Totales: 46 g
+- Grasas Totales: 37 g
+- Carbohidratos Totales: 42 g
+
+DESGLOSE DE ELEMENTOS CONSUMIDOS EN EL PLATO:
+1. Huevo (General Promedio) - Cantidad consumida: 112g (Aporte: 162 Kcal, P: 14g, G: 11g, C: 0g)
+2. Palitos de Queso precocidos (Tu Casa Snacks) - Cantidad consumida: 35g (Aporte: 122 Kcal, P: 5g, G: 7g, C: 6g)`
+    };
+
+    const domain = ReportsMapper.toDomain(rawFirestoreDoc);
+    expect(domain.id).toBe('04055f6d-f201-4491-b60b-2d480414cc4d');
+    expect(domain.title).toBe('Desayuno ');
+    expect(domain.periodStart).toBe('2026-11-01');
+    expect(domain.summary.averageCalories).toBe(692);
+    expect(domain.summary.averageProtein).toBe(46);
+    expect(domain.summary.averageFats).toBe(37);
+    expect(domain.summary.averageCarbs).toBe(42);
+    expect(domain.items?.length).toBe(2);
+    expect(domain.items?.[0].name).toBe('Huevo');
+    expect(domain.items?.[1].name).toBe('Palitos de Queso precocidos');
+  });
+
   it('debe transformar Reporte a persistencia cumpliendo el esquema inmutable de reports', () => {
     const domainReport = {
       id: 'rep_123',

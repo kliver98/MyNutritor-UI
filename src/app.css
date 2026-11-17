@@ -14,3 +14,121 @@ html.transitioning *:after {
   transition: all 150ms ease-in-out !important;
   transition-delay: 0 !important;
 }
+
+@media print {
+  /* 1. Ocultar navegación y elementos de UI interactiva */
+  header,
+  nav,
+  footer,
+  aside,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* 2. Quitar absolutamente todas las scrollbars en impresión */
+  html,
+  body,
+  * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+  }
+
+  /* 3. Desactivar todo overflow y alturas fijas en el árbol para permitir paginación continua multipágina */
+  html,
+  body,
+  body > div,
+  main,
+  section,
+  article,
+  div,
+  table,
+  tbody {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  /* Asegurar que contenedores con utilidades de desbordamiento no corten el contenido al imprimir */
+  .overflow-hidden,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  /* 4. MODO BOTÓN 2: Solo reportes de comida */
+  body.print-mode-food-only .print-full-only {
+    display: none !important;
+  }
+  body.print-mode-food-only .food-only-header {
+    display: block !important;
+  }
+  body.print-mode-food-only .food-report-section-title {
+    display: none !important;
+  }
+
+  /* 5. MODO BOTÓN 1: Reporte completo de toda la página (incluye KPIs, gráficos y comidas) */
+  body.print-mode-full .print-full-only,
+  body:not(.print-mode-food-only) .print-full-only {
+    display: block !important;
+  }
+  body.print-mode-full .food-only-header {
+    display: none !important;
+  }
+  body.print-mode-full .food-report-section-title {
+    display: block !important;
+  }
+
+  /* 6. El contenedor por día permite partirse y fluir a través de varias páginas */
+  .day-group-card,
+  [data-day-group] {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  /* 7. Cada fila individual de comida evita cortarse por la mitad */
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  /* 8. Forzar que todos los dropdowns de alimentos se expandan al imprimir/exportar */
+  .print-expand-all,
+  tr.print-expand-all {
+    display: table-row !important;
+  }
+
+  body,
+  main {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  @page {
+    margin: 1cm;
+    size: auto;
+  }
+}

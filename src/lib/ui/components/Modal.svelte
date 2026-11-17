@@ -31,11 +31,11 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-  <!-- Backdrop -->
+  <!-- Backdrop con negrita suave profunda que oscurece por completo el header y el fondo -->
   <div
     role="presentation"
     onclick={onclose}
-    class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 transition-opacity"
+    class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200"
   >
     <!-- Modal Window -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->

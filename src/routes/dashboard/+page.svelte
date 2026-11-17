@@ -7,21 +7,14 @@
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
-  import Input from '$lib/ui/components/Input.svelte';
-  import Drawer from '$lib/ui/components/Drawer.svelte';
   import Skeleton from '$lib/ui/components/Skeleton.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import MacroCard from '$lib/ui/features/dashboard/MacroCard.svelte';
   import DateSelector from '$lib/ui/features/dashboard/DateSelector.svelte';
+  import MealLogModal from '$lib/ui/features/meals/MealLogModal.svelte';
   import { getLocalDateStr } from '$lib/core/utils/format';
 
-  let isQuickAddOpen = $state(false);
-
-  // Form states for quick log drawer (no working defaults, clean placeholders)
-  let formCalories = $state<number | string>('');
-  let formProtein = $state<number | string>('');
-  let formCarbs = $state<number | string>('');
-  let formFats = $state<number | string>('');
+  let isMealModalOpen = $state(false);
 
   function getTodayStr(): string {
     return getLocalDateStr();
@@ -32,24 +25,6 @@
     macrosStore.fetchHistory();
     foodsStore.fetchFoods();
   });
-
-  async function handleSaveQuickAdd(e: SubmitEvent) {
-    e.preventDefault();
-    const ok = await macrosStore.saveMacro($macrosStore.selectedDate, {
-      calories: ($macrosStore.currentMacro?.calories || 0) + (Number(formCalories) || 0),
-      proteinGrams: ($macrosStore.currentMacro?.proteinGrams || 0) + (Number(formProtein) || 0),
-      carbsGrams: ($macrosStore.currentMacro?.carbsGrams || 0) + (Number(formCarbs) || 0),
-      fatsGrams: ($macrosStore.currentMacro?.fatsGrams || 0) + (Number(formFats) || 0)
-    });
-
-    if (ok) {
-      isQuickAddOpen = false;
-      formCalories = '';
-      formProtein = '';
-      formCarbs = '';
-      formFats = '';
-    }
-  }
 
   function handleDeleteCurrent() {
     if (confirm('¿Deseas eliminar el registro nutricional de este día?')) {
@@ -93,8 +68,8 @@
         onselect={(d) => macrosStore.setDate(d)}
       />
 
-      <Button variant="primary" size="sm" onclick={() => (isQuickAddOpen = true)}>
-        {$t('dashboard.logMacrosBtn')}
+      <Button variant="primary" size="sm" onclick={() => (isMealModalOpen = true)}>
+        🥗 Registrar Comida
       </Button>
     </div>
   </div>
@@ -114,7 +89,7 @@
       description={$t('dashboard.emptyDescription')}
       icon="🥗"
       actionLabel={$t('dashboard.logFirstAction')}
-      onaction={() => (isQuickAddOpen = true)}
+      onaction={() => (isMealModalOpen = true)}
     />
   {:else}
     <!-- Macro Summary Cards Grid -->
@@ -165,7 +140,7 @@
           </span>
         </div>
         <div class="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onclick={() => (isQuickAddOpen = true)}>
+          <Button variant="secondary" size="sm" onclick={() => (isMealModalOpen = true)}>
             {$t('dashboard.addMoreConsumption')}
           </Button>
           <Button
@@ -237,60 +212,11 @@
     </Card>
   {/if}
 
-  <!-- Quick Add Macro Drawer (Inline zero-friction flow) -->
-  <Drawer
-    open={isQuickAddOpen}
-    title={$t('dashboard.quickAddTitle')}
-    subtitle={$t('dashboard.quickAddSubtitle')}
-    onclose={() => (isQuickAddOpen = false)}
-  >
-    <form id="quick-add-form" onsubmit={handleSaveQuickAdd} class="space-y-4">
-      <Input
-        label="{$t('dashboard.calories')} ({$t('dashboard.kcal')})"
-        type="number"
-        placeholder="ej. 500"
-        bind:value={formCalories}
-        required
-      />
-
-      <div class="grid grid-cols-3 gap-2">
-        <Input
-          label="{$t('dashboard.protein')} (g)"
-          type="number"
-          placeholder="ej. 30"
-          bind:value={formProtein}
-          required
-        />
-        <Input
-          label="{$t('dashboard.carbs')} (g)"
-          type="number"
-          placeholder="ej. 50"
-          bind:value={formCarbs}
-          required
-        />
-        <Input
-          label="{$t('dashboard.fats')} (g)"
-          type="number"
-          placeholder="ej. 15"
-          bind:value={formFats}
-          required
-        />
-      </div>
-    </form>
-
-    {#snippet footer()}
-      <Button variant="outline" size="sm" onclick={() => (isQuickAddOpen = false)}>
-        {$t('common.cancel')}
-      </Button>
-      <Button
-        type="submit"
-        form="quick-add-form"
-        variant="primary"
-        size="sm"
-        loading={$macrosStore.isLoading}
-      >
-        {$t('common.confirm')}
-      </Button>
-    {/snippet}
-  </Drawer>
+  <!-- Modal para registrar comida completa con alimentos, recetas y resumen de impacto diario -->
+  <MealLogModal
+    open={isMealModalOpen}
+    onclose={() => (isMealModalOpen = false)}
+    onmealadded={() => macrosStore.fetchForDate($macrosStore.selectedDate)}
+  />
 </div>
+
