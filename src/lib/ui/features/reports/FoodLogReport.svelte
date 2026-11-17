@@ -14,12 +14,7 @@
   import MealLogModal from '../meals/MealLogModal.svelte';
   import DateRangePicker from '$lib/ui/components/DateRangePicker.svelte';
   import type { FoodLogItem } from '$lib/domain/reports/FoodLog';
-  import {
-    formatDisplayDate,
-    formatCurrentPrintDateTime,
-    getLocalDateStr,
-    getPastDateStr
-  } from '$lib/core/utils/format';
+  import { formatDisplayDate, formatCurrentPrintDateTime } from '$lib/core/utils/format';
   import { toastStore } from '$lib/core/feedback/toast.store';
 
   // Modal de registrar comida con selector de alimentos, recetas y cálculo de impacto
@@ -147,7 +142,9 @@
 
 <section class="space-y-6">
   <!-- ENCABEZADO DE IMPRESIÓN (Visible ÚNICAMENTE en el modo de solo comidas, omitido en vista web normal y en reporte completo) -->
-  <div class="hidden print:block mb-6 pb-4 border-b-2 border-slate-900 text-slate-900 food-only-header">
+  <div
+    class="hidden print:block mb-6 pb-4 border-b-2 border-slate-900 text-slate-900 food-only-header"
+  >
     <div class="flex items-start justify-between">
       <div>
         <h1 class="text-2xl font-black uppercase tracking-tight">
@@ -174,7 +171,9 @@
   </div>
 
   <!-- SUB-ENCABEZADO DE SECCIÓN EN REPORTE COMPLETO (Visible cuando se imprime todo el informe nutricional) -->
-  <div class="hidden print:block my-4 pt-4 border-t-2 border-slate-300 text-slate-900 food-report-section-title">
+  <div
+    class="hidden print:block my-4 pt-4 border-t-2 border-slate-300 text-slate-900 food-report-section-title"
+  >
     <h2 class="text-xl font-black uppercase tracking-tight">
       📋 Desglose Detallado de Comidas Registradas
     </h2>

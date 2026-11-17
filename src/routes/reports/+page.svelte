@@ -84,7 +84,9 @@
 
 <div class="space-y-6">
   <!-- ENCABEZADO DE IMPRESIÓN DEL REPORTE COMPLETO (Visible ÚNICAMENTE en impresión del botón 1) -->
-  <div class="hidden print:block mb-6 pb-4 border-b-2 border-slate-900 text-slate-900 print-full-only">
+  <div
+    class="hidden print:block mb-6 pb-4 border-b-2 border-slate-900 text-slate-900 print-full-only"
+  >
     <div class="flex items-start justify-between">
       <div>
         <h1 class="text-2xl font-black uppercase tracking-tight">
@@ -96,8 +98,14 @@
       </div>
       <div class="text-right text-xs text-slate-600 space-y-1">
         <p><b>Generado:</b> {formatCurrentPrintDateTime()}</p>
-        <p><b>Período Analizado:</b> {formatDisplayDate(startDate)} al {formatDisplayDate(endDate)}</p>
-        <p><b>Días con registro:</b> {calculated?.daysWithData ?? 0} de {calculated?.daysInRange ?? 0} días</p>
+        <p>
+          <b>Período Analizado:</b>
+          {formatDisplayDate(startDate)} al {formatDisplayDate(endDate)}
+        </p>
+        <p>
+          <b>Días con registro:</b>
+          {calculated?.daysWithData ?? 0} de {calculated?.daysInRange ?? 0} días
+        </p>
       </div>
     </div>
   </div>
@@ -211,7 +219,9 @@
       <!-- Summary Metric KPI Cards (4 cards) -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 print:grid print:grid-cols-4 print:gap-3">
         <!-- Promedio Calorías -->
-        <Card class="border-t-4 border-t-amber-500 print:border print:border-slate-300 print:shadow-none">
+        <Card
+          class="border-t-4 border-t-amber-500 print:border print:border-slate-300 print:shadow-none"
+        >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"
               >Promedio Calórico</span
@@ -232,7 +242,9 @@
         </Card>
 
         <!-- Promedio Proteína -->
-        <Card class="border-t-4 border-t-blue-500 print:border print:border-slate-300 print:shadow-none">
+        <Card
+          class="border-t-4 border-t-blue-500 print:border print:border-slate-300 print:shadow-none"
+        >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"
               >Promedio Proteína</span
@@ -253,7 +265,9 @@
         </Card>
 
         <!-- Promedio Carbos -->
-        <Card class="border-t-4 border-t-emerald-500 print:border print:border-slate-300 print:shadow-none">
+        <Card
+          class="border-t-4 border-t-emerald-500 print:border print:border-slate-300 print:shadow-none"
+        >
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-400 uppercase tracking-wider"
               >Promedio Carbos</span
@@ -274,9 +288,12 @@
         </Card>
 
         <!-- Adherencia al Plan -->
-        <Card class="border-t-4 border-t-purple-500 print:border print:border-slate-300 print:shadow-none">
+        <Card
+          class="border-t-4 border-t-purple-500 print:border print:border-slate-300 print:shadow-none"
+        >
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Adherencia</span>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Adherencia</span
+            >
             <span
               class="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-600"
             >
@@ -293,7 +310,9 @@
       </div>
 
       <!-- Charts Section (Gráficos Interactivos) -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 print:grid print:grid-cols-2 print:gap-4 print:break-inside-avoid">
+      <div
+        class="grid grid-cols-1 lg:grid-cols-2 gap-4 print:grid print:grid-cols-2 print:gap-4 print:break-inside-avoid"
+      >
         <div class="space-y-2">
           <h3 class="font-bold text-sm text-slate-900 dark:text-white px-1">
             Tendencia de Calorías vs Meta

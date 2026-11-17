@@ -175,10 +175,7 @@ export function parseMealReportMarkdown(markdown: string): ParsedMealReport | nu
   // Unificación obligatoria: si el reporte no contiene desglose numerado de ingredientes
   // pero sí cuenta con información nutricional del plato, sintetizar la entrada del plato registrado
   // para que la interfaz siempre lo muestre formateado y unificado como lista (sin bloques de código Markdown)
-  if (
-    items.length === 0 &&
-    (calories > 0 || proteinGrams > 0 || carbsGrams > 0 || fatsGrams > 0)
-  ) {
+  if (items.length === 0 && (calories > 0 || proteinGrams > 0 || carbsGrams > 0 || fatsGrams > 0)) {
     items.push({
       name: title || 'Plato registrado',
       brand: 'Plato registrado',
@@ -246,7 +243,9 @@ export function parseReportTimestamp(ts?: unknown): { date: string; time: string
   }
 
   // 2. Epoch numérico (milisegundos o segundos)
-  const str = String(ts).replace(/^['"]|['"]$/g, '').trim();
+  const str = String(ts)
+    .replace(/^['"]|['"]$/g, '')
+    .trim();
   if (/^\d{10,13}$/.test(str)) {
     const num = Number(str);
     const ms = str.length === 10 ? num * 1000 : num;

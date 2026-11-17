@@ -6,26 +6,7 @@ on:
       - main
       - 'release/**'
       - 'deploy/**'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Rama a desplegar (déjalo vacío para usar la rama seleccionada en "Use workflow from")'
-        required: false
-        default: 'main'
-        type: string
-      base_path:
-        description: 'Ruta base (BASE_PATH) de la app para GitHub Pages (ej. /MyNutritor-UI)'
-        required: false
-        default: '/MyNutritor-UI'
-        type: string
-      skip_tests:
-        description: 'Omitir pruebas unitarias y linters (despliegue rápido manual)'
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: write
@@ -42,15 +23,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ (github.event.inputs.branch != '' && github.event.inputs.branch) || github.ref }}
 
       - name: Display deployment context
         run: |
           echo "=================================================="
           echo "🚀 Evento: ${{ github.event_name }}"
           echo "🌿 Rama de ejecución: ${{ github.ref_name }}"
-          echo "🎯 Rama a compilar: ${{ (github.event.inputs.branch != '' && github.event.inputs.branch) || github.ref_name }}"
           echo "📦 Commit SHA: ${{ github.sha }}"
           echo "=================================================="
 
@@ -64,21 +42,18 @@ jobs:
         run: npm ci
 
       - name: Run linter
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_tests }}
         run: npm run lint
 
       - name: Type check
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_tests }}
         run: npm run check
 
       - name: Run unit & component tests
-        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_tests }}
         run: npm run test:run
 
       - name: Build static site
         run: npm run build
         env:
-          BASE_PATH: ${{ inputs.base_path || vars.BASE_PATH || '/MyNutritor-UI' }}
+          BASE_PATH: ${{ vars.BASE_PATH || '/MyNutritor-UI' }}
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || secrets.VITE_API_BASE_URL || 'https://my-nutritor-be-74319366403.us-central1.run.app' }}
           VITE_APP_ENV: ${{ vars.VITE_APP_ENV || 'production' }}
           VITE_API_TIMEOUT_MS: ${{ vars.VITE_API_TIMEOUT_MS || '15000' }}
@@ -89,7 +64,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./build
-          commit_message: "Deploy from ${{ (inputs.branch != '' && inputs.branch) || github.ref_name }} (${{ github.sha }}) [skip ci]"
+          commit_message: 'Deploy from ${{ github.ref_name }} (${{ github.sha }}) [skip ci]'
 
       - name: Upload GitHub Pages artifact
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'

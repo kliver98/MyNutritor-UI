@@ -9,8 +9,7 @@
     getDaysDifference,
     getPresetStartDate
   } from '$lib/core/utils/calendar';
-  import { formatDisplayDate, getLocalDateStr, getPastDateStr } from '$lib/core/utils/format';
-  import Button from './Button.svelte';
+  import { formatDisplayDate, getLocalDateStr } from '$lib/core/utils/format';
 
   interface Props {
     startDate?: string;
