@@ -219,4 +219,3 @@
     onmealadded={() => macrosStore.fetchForDate($macrosStore.selectedDate)}
   />
 </div>
-

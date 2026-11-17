@@ -6,9 +6,6 @@ on:
       - main
       - 'release/**'
       - 'deploy/**'
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       branch:

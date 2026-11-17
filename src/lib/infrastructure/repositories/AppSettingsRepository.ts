@@ -31,10 +31,16 @@ export class AppSettingsRepository implements IAppSettingsRepository {
 
   async patchFeatureFlags(flags: Partial<FeatureFlags>): Promise<FeatureFlags> {
     try {
-      const res = await this.http.patch<unknown>('/api/v1/app-settings/mobile/feature-flags', flags);
+      const res = await this.http.patch<unknown>(
+        '/api/v1/app-settings/mobile/feature-flags',
+        flags
+      );
       return AppSettingsMapper.toFeatureFlagsDomain(res.data);
     } catch {
-      const res = await this.http.patch<unknown>('/api/v1/app_settings/mobile/feature-flags', flags);
+      const res = await this.http.patch<unknown>(
+        '/api/v1/app_settings/mobile/feature-flags',
+        flags
+      );
       return AppSettingsMapper.toFeatureFlagsDomain(res.data);
     }
   }
