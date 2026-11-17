@@ -31,11 +31,11 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-  <!-- Backdrop -->
+  <!-- Backdrop con negrita suave profunda que oscurece por completo el header y el fondo -->
   <div
     role="presentation"
     onclick={onclose}
-    class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200"
+    class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md transition-all duration-200"
   ></div>
 
   <!-- Slide-over Drawer Panel -->

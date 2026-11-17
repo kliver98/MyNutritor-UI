@@ -172,7 +172,7 @@
   <div
     role="presentation"
     onclick={closePalette}
-    class="fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur-xs flex items-start justify-center pt-20 px-4"
+    class="fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-start justify-center pt-20 px-4 transition-all duration-200"
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div

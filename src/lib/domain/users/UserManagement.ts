@@ -1,4 +1,5 @@
 import type { User } from '../auth/User';
+import type { MealBreakdownItem } from '../reports/MealReportFormat';
 
 export interface DailyMacro {
   date: string; // YYYY-MM-DD
@@ -18,8 +19,10 @@ export interface UserReport {
   userId: string;
   title: string;
   generatedAt: string;
-  periodStart: string;
-  periodEnd: string;
+  timestamp?: string;
+  fullContent?: string;
+  periodStart?: string;
+  periodEnd?: string;
   summary: {
     averageCalories: number;
     averageProtein: number;
@@ -27,6 +30,7 @@ export interface UserReport {
     averageFats: number;
   };
   details?: Record<string, unknown>;
+  items?: MealBreakdownItem[];
 }
 
 export interface UserSettings {

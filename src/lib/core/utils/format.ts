@@ -204,7 +204,11 @@ export function cssColorToArgbInt(cssColor: string): number | null {
  */
 export function isColorDark(cssColor: string | undefined | null): boolean {
   if (!cssColor) return false;
-  const hex = cssColor.trim().replace(/^#/, '');
+  let hex = cssColor.trim().replace(/^#/, '');
+  if (hex.length === 8 && /^[0-9a-fA-F]{8}$/.test(hex)) {
+    // Si viene en formato ARGB de 8 dígitos (ej. Android), descartar el canal alfa inicial
+    hex = hex.slice(2);
+  }
   if (/^[0-9a-fA-F]{6}/.test(hex)) {
     const r = parseInt(hex.slice(0, 2), 16);
     const g = parseInt(hex.slice(2, 4), 16);
@@ -213,4 +217,102 @@ export function isColorDark(cssColor: string | undefined | null): boolean {
     return yiq < 128;
   }
   return false;
+}
+
+/**
+ * Formatea una fecha YYYY-MM-DD a formato completo para encabezados (ej. "Lunes, 16 de Noviembre de 2026")
+ */
+export function formatFullDayDate(dateStr: string | undefined | null): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const date = new Date(year, month, day);
+
+    const weekdays = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const months = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre'
+    ];
+    return `${weekdays[date.getDay()]}, ${day} de ${months[month]} de ${year}`;
+  }
+  return dateStr;
+}
+
+/**
+ * Formatea fecha y hora actual en español para encabezados de impresión
+ * Ej: "16 de Noviembre de 2026 a las 21:45"
+ */
+export function formatCurrentPrintDateTime(baseDate: Date = new Date()): string {
+  const months = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre'
+  ];
+  const day = baseDate.getDate();
+  const month = months[baseDate.getMonth()];
+  const year = baseDate.getFullYear();
+  const hours = String(baseDate.getHours()).padStart(2, '0');
+  const minutes = String(baseDate.getMinutes()).padStart(2, '0');
+  return `${day} de ${month} de ${year} a las ${hours}:${minutes}`;
+}
+
+/**
+ * Valida un rango de fechas. Retorna la cantidad de días y si supera el límite de 60 días (2 meses).
+ */
+export function validateDateRange(
+  startStr: string,
+  endStr: string,
+  maxDays: number = 60
+): { isValid: boolean; daysCount: number; errorMessage?: string } {
+  if (!startStr || !endStr) {
+    return {
+      isValid: false,
+      daysCount: 0,
+      errorMessage: 'Debes seleccionar fecha de inicio y fin.'
+    };
+  }
+  if (startStr > endStr) {
+    return {
+      isValid: false,
+      daysCount: 0,
+      errorMessage: 'La fecha de inicio no puede ser posterior a la fecha final.'
+    };
+  }
+
+  const startDate = new Date(startStr);
+  const endDate = new Date(endStr);
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+  if (diffDays > maxDays) {
+    return {
+      isValid: false,
+      daysCount: diffDays,
+      errorMessage: `El rango personalizado (${diffDays} días) no puede superar el límite de ${maxDays} días (2 meses).`
+    };
+  }
+
+  return { isValid: true, daysCount: diffDays };
 }

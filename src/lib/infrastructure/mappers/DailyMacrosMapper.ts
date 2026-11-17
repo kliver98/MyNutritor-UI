@@ -7,6 +7,11 @@ import type {
   DraftPrompt
 } from '../../domain/users/UserManagement';
 import {
+  parseMealReportMarkdown,
+  parseReportTimestamp,
+  type MealBreakdownItem
+} from '../../domain/reports/MealReportFormat';
+import {
   DailyMacroDtoSchema,
   ReportDtoSchema,
   UserSettingsDtoSchema,
@@ -106,8 +111,27 @@ export class ReportsMapper {
       details?: Record<string, unknown>;
     } = {};
 
+    let items: MealBreakdownItem[] | undefined;
     const rawContent = parsed.fullContent || parsed.full_content;
-    if (rawContent && typeof rawContent === 'string' && rawContent.startsWith('{')) {
+
+    if (
+      rawContent &&
+      typeof rawContent === 'string' &&
+      (rawContent.includes('###') || rawContent.includes('NOMBRE DEL ALIMENTO'))
+    ) {
+      const parsedMd = parseMealReportMarkdown(rawContent);
+      if (parsedMd) {
+        items = parsedMd.items;
+        parsedContent = {
+          summary: {
+            averageCalories: parsedMd.macros.calories,
+            averageProtein: parsedMd.macros.proteinGrams,
+            averageCarbs: parsedMd.macros.carbsGrams,
+            averageFats: parsedMd.macros.fatsGrams
+          }
+        };
+      }
+    } else if (rawContent && typeof rawContent === 'string' && rawContent.startsWith('{')) {
       try {
         parsedContent = JSON.parse(rawContent);
       } catch {
@@ -116,24 +140,56 @@ export class ReportsMapper {
     }
 
     const summary = parsed.summary || parsedContent.summary || {};
+    const rawTs =
+      parsed.timestamp ??
+      parsed.generatedAt ??
+      parsed.generated_at ??
+      parsed.createdAt ??
+      parsed.created_at;
+    const tsInfo = parseReportTimestamp(rawTs);
+    const tsString =
+      typeof rawTs === 'string'
+        ? rawTs
+        : tsInfo.date
+          ? `${tsInfo.date} ${tsInfo.time}`.trim()
+          : undefined;
+
     return {
       id: parsed.id,
       userId: parsed.userId || parsed.user_id || '',
       title: parsed.title,
-      generatedAt:
-        parsed.timestamp || parsed.generatedAt || parsed.generated_at || new Date().toISOString(),
-      periodStart: parsed.periodStart || parsed.period_start || parsedContent.periodStart || '',
-      periodEnd: parsed.periodEnd || parsed.period_end || parsedContent.periodEnd || '',
+      timestamp: tsString,
+      fullContent: rawContent,
+      generatedAt: tsString || new Date().toISOString(),
+      periodStart:
+        parsed.periodStart || parsed.period_start || parsedContent.periodStart || tsInfo.date,
+      periodEnd: parsed.periodEnd || parsed.period_end || parsedContent.periodEnd || tsInfo.date,
       summary: {
         averageCalories: roundToDecimals(
-          summary.averageCalories ?? summary.average_calories ?? 0,
+          parsedContent.summary?.averageCalories ??
+            summary.averageCalories ??
+            summary.average_calories ??
+            0,
           0
         ),
-        averageProtein: roundToDecimals(summary.averageProtein ?? summary.average_protein ?? 0, 2),
-        averageCarbs: roundToDecimals(summary.averageCarbs ?? summary.average_carbs ?? 0, 2),
-        averageFats: roundToDecimals(summary.averageFats ?? summary.average_fats ?? 0, 2)
+        averageProtein: roundToDecimals(
+          parsedContent.summary?.averageProtein ??
+            summary.averageProtein ??
+            summary.average_protein ??
+            0,
+          2
+        ),
+        averageCarbs: roundToDecimals(
+          parsedContent.summary?.averageCarbs ?? summary.averageCarbs ?? summary.average_carbs ?? 0,
+          2
+        ),
+        averageFats: roundToDecimals(
+          parsedContent.summary?.averageFats ?? summary.averageFats ?? summary.average_fats ?? 0,
+          2
+        )
       },
-      details: parsed.details || parsedContent.details
+      details: parsed.details || parsedContent.details,
+      items
     };
   }
 
@@ -149,18 +205,20 @@ export class ReportsMapper {
   static toPersistenceDto(report: Partial<UserReport>, username?: string): Record<string, unknown> {
     const payload: Record<string, unknown> = {
       title: report.title || 'Informe Nutricional',
-      timestamp: report.generatedAt || new Date().toISOString(),
-      fullContent: JSON.stringify({
-        periodStart: report.periodStart || '',
-        periodEnd: report.periodEnd || '',
-        summary: report.summary || {
-          averageCalories: 0,
-          averageProtein: 0,
-          averageCarbs: 0,
-          averageFats: 0
-        },
-        details: report.details || {}
-      }),
+      timestamp: report.timestamp || report.generatedAt || new Date().toISOString(),
+      fullContent:
+        report.fullContent ||
+        JSON.stringify({
+          periodStart: report.periodStart || '',
+          periodEnd: report.periodEnd || '',
+          summary: report.summary || {
+            averageCalories: 0,
+            averageProtein: 0,
+            averageCarbs: 0,
+            averageFats: 0
+          },
+          details: report.details || {}
+        }),
       userId: report.userId || username || ''
     };
     if (report.id) payload.id = report.id;
