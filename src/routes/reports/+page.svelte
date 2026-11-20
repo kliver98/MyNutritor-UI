@@ -5,6 +5,7 @@
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import Skeleton from '$lib/ui/components/Skeleton.svelte';
   import CalorieTrendChart from '$lib/ui/features/reports/CalorieTrendChart.svelte';
@@ -129,7 +130,8 @@
         </p>
       </div>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="flex items-center gap-2 shrink-0 print:hidden">
+      <RefreshButton variant="button" />
       <Button variant="outline" size="sm" onclick={handlePrintFull}>
         🖨️ {$t('reports.printBtn')}
       </Button>

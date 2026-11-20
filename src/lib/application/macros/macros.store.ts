@@ -34,6 +34,12 @@ function createMacrosStore() {
 
     setDate(dateStr: string) {
       update((s) => ({ ...s, selectedDate: dateStr }));
+      const current = get(macrosStore);
+      const cached = current.history.find((m) => m.date === dateStr);
+      if (cached) {
+        update((s) => ({ ...s, currentMacro: cached, isLoading: false, error: null }));
+        return;
+      }
       this.fetchForDate(dateStr);
     },
 
@@ -74,17 +80,29 @@ function createMacrosStore() {
       }));
     },
 
-    async fetchHistory(): Promise<DailyMacro[]> {
+    async fetchHistory(force = false): Promise<DailyMacro[]> {
       const auth = get(authStore);
       if (!auth.user) {
         update((s) => ({ ...s, history: [] }));
         return [];
       }
+      const current = get(macrosStore);
+      if (!force && current.history.length > 0) {
+        return current.history;
+      }
       const username = auth.user.username;
       try {
         const history = await repositories.dailyMacros.getAll(username);
         history.sort((a, b) => b.date.localeCompare(a.date));
-        update((s) => ({ ...s, history }));
+        update((s) => {
+          const selected = s.selectedDate;
+          const found = history.find((m) => m.date === selected);
+          return {
+            ...s,
+            history,
+            currentMacro: found || s.currentMacro
+          };
+        });
         return history;
       } catch {
         return [];
@@ -115,7 +133,7 @@ function createMacrosStore() {
       try {
         const saved = await repositories.dailyMacros.create(username, dateStr, optimisticMacro);
         update((s) => ({ ...s, currentMacro: saved }));
-        this.fetchHistory();
+        this.fetchHistory(true);
         toastStore.success('Macros guardados correctamente', 'Éxito');
         return true;
       } catch (err: unknown) {
@@ -143,7 +161,7 @@ function createMacrosStore() {
 
       try {
         await repositories.dailyMacros.delete(username, current.selectedDate);
-        this.fetchHistory();
+        this.fetchHistory(true);
         toastStore.success('Registro de macros eliminado', 'Eliminado', {
           label: 'Deshacer',
           onClick: () => {

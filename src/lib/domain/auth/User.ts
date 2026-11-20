@@ -4,7 +4,6 @@ export interface User {
   id: string;
   userId?: string;
   username: string;
-  email: string;
   fullName?: string;
   role: UserRole;
   roleId?: string;
@@ -20,15 +19,13 @@ export interface AuthSession {
 }
 
 export interface LoginCredentials {
-  usernameOrEmail: string;
+  username: string;
   password: string;
 }
 
 export interface RegisterData {
   username: string;
-  email: string;
   password: string;
-  fullName?: string;
 }
 
 export interface IAuthRepository {

@@ -104,7 +104,7 @@
 </script>
 
 <div
-  class="min-h-full flex flex-col transition-colors pb-16 md:pb-0 w-full max-w-full overflow-x-hidden"
+  class="min-h-screen flex flex-col flex-1 transition-colors pb-16 md:pb-0 w-full max-w-full overflow-x-hidden"
   class:text-white={$isCustomBgDark}
   class:text-slate-900={!$isCustomBgDark}
   class:dark:text-slate-100={!$customBgStore}
@@ -159,7 +159,7 @@
   </main>
 
   <footer
-    class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-500 dark:text-slate-400"
+    class="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 text-center text-xs text-slate-500 dark:text-slate-400"
   >
     <div
       class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2"

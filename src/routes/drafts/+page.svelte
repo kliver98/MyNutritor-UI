@@ -4,6 +4,7 @@
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
   import Input from '$lib/ui/components/Input.svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
@@ -52,7 +53,8 @@
         {$t('drafts.subtitle')}
       </p>
     </div>
-    <div class="flex gap-2">
+    <div class="flex items-center gap-2">
+      <RefreshButton variant="button" />
       <Button variant="primary" size="sm" onclick={() => (isMealDrawerOpen = true)}>
         + Nuevo Borrador
       </Button>

@@ -6,7 +6,6 @@ describe('AuthMapper', () => {
     const rawDto = {
       id: 'usr_123',
       username: 'carlos_fit',
-      email: 'carlos@fit.com',
       full_name: 'Carlos Mendoza',
       role: 'ADMIN',
       is_active: true,
@@ -27,7 +26,6 @@ describe('AuthMapper', () => {
     const rawUser = {
       id: 456,
       username: 'ana',
-      email: 'ana@nutri.com',
       role: 'user'
     };
 
@@ -43,7 +41,6 @@ describe('AuthMapper', () => {
       user: {
         id: 'usr_999',
         username: 'marcos',
-        email: 'marcos@test.com',
         role: 'user'
       }
     };
@@ -78,7 +75,6 @@ describe('AuthMapper', () => {
     expect(session.token).toBe('jwt_cloud_run_token_testu');
     expect(session.user.id).toBe('testU');
     expect(session.user.username).toBe('testU');
-    expect(session.user.email).toBe('');
     expect(session.user.role).toBe('user');
     expect(session.user.roleId).toBe('2');
     expect(session.user.isActive).toBe(true);

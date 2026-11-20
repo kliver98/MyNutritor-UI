@@ -24,10 +24,14 @@ function createRecipesStore() {
   return {
     subscribe,
 
-    async fetchRecipes() {
+    async fetchRecipes(force = false) {
       const auth = get(authStore);
       if (!auth.user) {
         update((s) => ({ ...s, recipes: [], isLoading: false }));
+        return;
+      }
+      const current = get(recipesStore);
+      if (!force && current.recipes.length > 0) {
         return;
       }
       update((s) => ({ ...s, isLoading: true, error: null }));

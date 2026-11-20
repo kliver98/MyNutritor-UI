@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { writable, get } from 'svelte/store';
 import type { HealthStatus, RootSystemInfo } from '../../domain/system/Health';
 import { repositories } from '../../infrastructure/container';
 
@@ -22,7 +22,11 @@ function createHealthStore() {
   return {
     subscribe,
 
-    async checkHealth(): Promise<void> {
+    async checkHealth(force = false): Promise<void> {
+      const state = get(healthStore);
+      if (!force && state.lastChecked && Date.now() - state.lastChecked.getTime() < 120_000) {
+        return;
+      }
       update((s) => ({ ...s, isLoading: true, error: null }));
       try {
         const [health, rootInfo] = await Promise.allSettled([

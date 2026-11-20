@@ -33,7 +33,9 @@ export const es = {
     demoAdmin: 'Modo Admin Demo',
     demoUser: 'Modo Usuario Demo',
     offlineBanner: 'Sin conexión con el servidor. Verificando disponibilidad...',
-    undo: 'Deshacer'
+    undo: 'Deshacer',
+    refresh: 'Actualizar',
+    refreshSuccess: 'Contenido actualizado'
   },
   nav: {
     home: 'Inicio',
@@ -58,9 +60,7 @@ export const es = {
     loginSubtitle: 'Accede con tus credenciales de MyNutritor',
     registerTitle: 'Crear Cuenta',
     registerSubtitle: 'Únete para gestionar tus macros y recetas nutricionales',
-    usernameOrEmail: 'Usuario o Email',
     username: 'Nombre de usuario',
-    email: 'Correo electrónico',
     password: 'Contraseña',
     confirmPassword: 'Confirmar Contraseña',
     fullName: 'Nombre completo (opcional)',
@@ -341,7 +341,9 @@ export const en: typeof es = {
     demoAdmin: 'Admin Demo Mode',
     demoUser: 'User Demo Mode',
     offlineBanner: 'No connection to server. Checking service health...',
-    undo: 'Undo'
+    undo: 'Undo',
+    refresh: 'Refresh content',
+    refreshSuccess: 'Content refreshed'
   },
   nav: {
     home: 'Home',
@@ -366,9 +368,7 @@ export const en: typeof es = {
     loginSubtitle: 'Sign in with your MyNutritor credentials',
     registerTitle: 'Create Account',
     registerSubtitle: 'Join to track your macros and nutrition recipes',
-    usernameOrEmail: 'Username or Email',
     username: 'Username',
-    email: 'Email address',
     password: 'Password',
     confirmPassword: 'Confirm Password',
     fullName: 'Full name (optional)',

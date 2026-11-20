@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import type { User, LoginCredentials } from '../../domain/auth/User';
+import type { User, LoginCredentials, RegisterData } from '../../domain/auth/User';
 import { repositories } from '../../infrastructure/container';
 import { defaultTokenStorage } from '../../core/storage/TokenStorage';
 import { AppHttpError, defaultHttpClient } from '../../core/http/HttpClient';
@@ -98,6 +98,31 @@ function createAuthStore() {
       }
     },
 
+    async register(data: RegisterData): Promise<boolean> {
+      update((s) => ({ ...s, isLoading: true, error: null }));
+      try {
+        const session = await repositories.auth.register(data);
+        update((s) => ({
+          ...s,
+          user: session.user,
+          token: session.token,
+          isLoading: false,
+          error: null
+        }));
+        settingsStore.fetchSettings();
+        return true;
+      } catch (err: unknown) {
+        let msg = 'Error al registrar cuenta';
+        if (err instanceof AppHttpError) {
+          msg = err.message;
+        } else if (err instanceof Error) {
+          msg = err.message;
+        }
+        update((s) => ({ ...s, isLoading: false, error: msg }));
+        return false;
+      }
+    },
+
     /**
      * Permite iniciar una sesión de prueba rápida para verificar vistas (Admin vs User)
      */
@@ -105,7 +130,6 @@ function createAuthStore() {
       const demoUser: User = {
         id: `demo-${role}-01`,
         username: role === 'admin' ? 'admin_demo' : 'nutri_user',
-        email: `${role}@mynutritor.demo`,
         fullName: role === 'admin' ? 'Administrador Sistema' : 'Usuario Nutrición',
         role,
         isActive: true,

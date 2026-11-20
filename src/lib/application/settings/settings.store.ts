@@ -30,9 +30,13 @@ function createSettingsStore() {
       }));
     },
 
-    async fetchSettings() {
+    async fetchSettings(force = false) {
       const auth = get(authStore);
       if (!auth.user) return;
+      const current = get(settingsStore);
+      if (!force && current.settings !== null) {
+        return current.settings;
+      }
       update((s) => ({ ...s, isLoading: true, error: null }));
       try {
         const settings = await repositories.userSettings.getSettings(auth.user.username);

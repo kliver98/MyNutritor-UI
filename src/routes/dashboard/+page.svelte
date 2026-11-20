@@ -3,10 +3,10 @@
   import { base } from '$app/paths';
   import { macrosStore } from '$lib/application/macros/macros.store';
   import { currentUser } from '$lib/application/auth/auth.store';
-  import { foodsStore } from '$lib/application/foods/foods.store';
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
   import Skeleton from '$lib/ui/components/Skeleton.svelte';
   import EmptyState from '$lib/ui/components/EmptyState.svelte';
   import MacroCard from '$lib/ui/features/dashboard/MacroCard.svelte';
@@ -20,10 +20,18 @@
     return getLocalDateStr();
   }
 
-  onMount(() => {
-    macrosStore.fetchForDate($macrosStore.selectedDate || getTodayStr());
-    macrosStore.fetchHistory();
-    foodsStore.fetchFoods();
+  onMount(async () => {
+    const selected = $macrosStore.selectedDate || getTodayStr();
+    // Cache-first: si el historial ya está cargado, reutilizarlo y sincronizar fecha sin peticiones dobles
+    const cached = $macrosStore.history.find((m) => m.date === selected);
+    if (cached) {
+      macrosStore.setDate(selected);
+    } else {
+      const hist = await macrosStore.fetchHistory();
+      if (!hist.some((m) => m.date === selected)) {
+        macrosStore.fetchForDate(selected);
+      }
+    }
   });
 
   function handleDeleteCurrent() {
@@ -67,6 +75,8 @@
         history={$macrosStore.history}
         onselect={(d) => macrosStore.setDate(d)}
       />
+
+      <RefreshButton variant="button" />
 
       <Button variant="primary" size="sm" onclick={() => (isMealModalOpen = true)}>
         🥗 Registrar Comida

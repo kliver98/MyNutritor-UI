@@ -10,17 +10,15 @@
   import { ENV } from '$lib/core/config/env';
 
   let username = $state('');
-  let email = $state('');
   let password = $state('');
   let confirmPassword = $state('');
-  let fullName = $state('');
   let validationError = $state<string | null>(null);
 
   async function handleRegister(e: SubmitEvent) {
     e.preventDefault();
     validationError = null;
 
-    if (!username.trim() || !email.trim() || !password) {
+    if (!username.trim() || !password) {
       validationError = $t('auth.requiredField');
       return;
     }
@@ -31,8 +29,8 @@
     }
 
     try {
-      const ok = await authStore.login({
-        usernameOrEmail: username.trim(),
+      const ok = await authStore.register({
+        username: username.trim(),
         password
       });
 
@@ -75,22 +73,6 @@
         placeholder="ej. marcos_fit"
         bind:value={username}
         required
-        disabled={$authStore.isLoading}
-      />
-
-      <Input
-        label={$t('auth.email')}
-        type="email"
-        placeholder="ej. marcos@ejemplo.com"
-        bind:value={email}
-        required
-        disabled={$authStore.isLoading}
-      />
-
-      <Input
-        label={$t('auth.fullName')}
-        placeholder="ej. Marcos Valdés"
-        bind:value={fullName}
         disabled={$authStore.isLoading}
       />
 
