@@ -16,7 +16,6 @@ export const UserDtoSchema = z
     id: z.union([z.string(), z.number()]).transform(String).optional(),
     userId: z.union([z.string(), z.number()]).transform(String).optional(),
     username: z.string(),
-    email: z.string().optional().default(''),
     full_name: z.string().nullable().optional(),
     fullName: z.string().nullable().optional(),
     role: UserRoleDtoSchema.optional(),

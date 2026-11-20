@@ -144,13 +144,18 @@ function createReportsStore() {
       }));
     },
 
-    async fetchData(startDate?: string, endDate?: string) {
+    async fetchData(startDate?: string, endDate?: string, force = false) {
       const auth = get(authStore);
       if (!auth.user) return;
 
       const current = get(reportsStore);
       const start = startDate || current.startDate;
       const end = endDate || current.endDate;
+
+      if (!force && current.dailyMacros.length > 0 && current.reports.length > 0) {
+        this.setDateRange(start, end);
+        return;
+      }
 
       update((s) => ({ ...s, isLoading: true, error: null, startDate: start, endDate: end }));
       try {

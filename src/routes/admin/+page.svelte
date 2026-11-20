@@ -5,6 +5,7 @@
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
   import Input from '$lib/ui/components/Input.svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
   import Modal from '$lib/ui/components/Modal.svelte';
@@ -81,6 +82,9 @@
       <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
         {$t('admin.subtitle')}
       </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <RefreshButton variant="button" />
     </div>
   </div>
 

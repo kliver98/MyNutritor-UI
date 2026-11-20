@@ -7,6 +7,7 @@
   import Button from '$lib/ui/components/Button.svelte';
   import Input from '$lib/ui/components/Input.svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
 
   // Form local state (no working defaults, clean placeholders)
   let calGoal = $state<number | string>('');
@@ -49,11 +50,16 @@
 
 <div class="space-y-6 max-w-4xl mx-auto">
   <!-- Header -->
-  <div>
-    <h1 class="text-2xl font-black text-slate-900 dark:text-white">{$t('settings.title')}</h1>
-    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-      {$t('settings.subtitle')}
-    </p>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-slate-900 dark:text-white">{$t('settings.title')}</h1>
+      <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+        {$t('settings.subtitle')}
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <RefreshButton variant="button" />
+    </div>
   </div>
 
   <form onsubmit={handleSaveSettings} class="space-y-6">
@@ -67,9 +73,9 @@
           </p>
         </div>
         <div>
-          <span class="text-xs text-slate-400">Correo Electrónico</span>
+          <span class="text-xs text-slate-400">Nombre Completo</span>
           <p class="font-bold text-sm text-slate-900 dark:text-white mt-0.5">
-            {$currentUser?.email || 'N/A'}
+            {$currentUser?.fullName || $currentUser?.username || 'Usuario'}
           </p>
         </div>
         <div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import Modal from '$lib/ui/components/Modal.svelte';
   import Button from '$lib/ui/components/Button.svelte';
   import Input from '$lib/ui/components/Input.svelte';
@@ -35,16 +34,15 @@
   let foodSearch = $state('');
   let selectedRecipeId = $state('');
 
-  onMount(() => {
-    if ($foodsStore.items.length === 0) foodsStore.fetchFoods();
-    if ($recipesStore.recipes.length === 0) recipesStore.fetchRecipes();
-  });
-
   $effect(() => {
     if (open) {
       formDate = getLocalDateStr();
       const now = new Date();
       formTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      // Carga perezosa (lazy load): solo si el modal está abierto y los datos no están en memoria
+      if ($foodsStore.items.length === 0) foodsStore.fetchFoods();
+      if ($recipesStore.recipes.length === 0) recipesStore.fetchRecipes();
     }
   });
 

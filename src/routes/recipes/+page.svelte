@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { recipesStore } from '$lib/application/recipes/recipes.store';
-  import { foodsStore } from '$lib/application/foods/foods.store';
   import { authStore } from '$lib/application/auth/auth.store';
   import { t } from '$lib/core/i18n/i18n.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Badge from '$lib/ui/components/Badge.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
   import Input from '$lib/ui/components/Input.svelte';
   import Drawer from '$lib/ui/components/Drawer.svelte';
   import Modal from '$lib/ui/components/Modal.svelte';
@@ -63,7 +63,6 @@
 
   onMount(() => {
     recipesStore.fetchRecipes();
-    foodsStore.fetchFoods();
   });
 
   const filteredRecipes = $derived(
@@ -187,9 +186,12 @@
         {$t('recipes.subtitle')}
       </p>
     </div>
-    <Button variant="primary" size="sm" onclick={openCreateDrawer}>
-      {$t('recipes.createRecipeBtn')}
-    </Button>
+    <div class="flex items-center gap-2">
+      <RefreshButton variant="button" />
+      <Button variant="primary" size="sm" onclick={openCreateDrawer}>
+        {$t('recipes.createRecipeBtn')}
+      </Button>
+    </div>
   </div>
 
   <!-- Search Filter in elevated card -->

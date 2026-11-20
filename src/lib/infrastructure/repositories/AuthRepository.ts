@@ -22,9 +22,7 @@ export class AuthRepository implements IAuthRepository {
     const res = await this.http.post<unknown>(
       '/api/v1/auth/login',
       {
-        username: credentials.usernameOrEmail,
-        username_or_email: credentials.usernameOrEmail,
-        email: credentials.usernameOrEmail,
+        username: credentials.username,
         password: credentials.password
       },
       { skipAuth: true }
@@ -54,17 +52,14 @@ export class AuthRepository implements IAuthRepository {
       '/api/v1/auth/register',
       {
         username: data.username,
-        email: data.email,
         password: data.password,
-        fullName: data.fullName,
-        full_name: data.fullName,
         age: 25,
         heightCm: 175,
         weightKg: 70,
-        genderId: 'male',
-        activityLevelId: 'moderate',
-        goalId: 'maintenance',
-        roleId: 'user'
+        genderId: '1',
+        activityLevelId: '3',
+        goalId: '2',
+        roleId: '2'
       },
       { skipAuth: true }
     );

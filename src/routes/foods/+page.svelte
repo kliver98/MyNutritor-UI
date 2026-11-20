@@ -5,6 +5,7 @@
   import { currentUser, isAdmin } from '$lib/application/auth/auth.store';
   import Card from '$lib/ui/components/Card.svelte';
   import Button from '$lib/ui/components/Button.svelte';
+  import RefreshButton from '$lib/ui/components/RefreshButton.svelte';
   import Input from '$lib/ui/components/Input.svelte';
   import Drawer from '$lib/ui/components/Drawer.svelte';
   import Modal from '$lib/ui/components/Modal.svelte';
@@ -207,9 +208,12 @@
         {$t('foods.subtitle')}
       </p>
     </div>
-    <Button variant="primary" size="sm" onclick={openCreateDrawer}>
-      {$t('foods.addFoodBtn')}
-    </Button>
+    <div class="flex items-center gap-2">
+      <RefreshButton variant="button" />
+      <Button variant="primary" size="sm" onclick={openCreateDrawer}>
+        {$t('foods.addFoodBtn')}
+      </Button>
+    </div>
   </div>
 
   <!-- Search in elevated card -->

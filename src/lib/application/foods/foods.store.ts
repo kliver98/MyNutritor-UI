@@ -7,6 +7,7 @@ import { toastStore } from '../../core/feedback/toast.store';
 export interface FoodsState {
   items: FoodItem[];
   excludedIds: string[];
+  exclusionsLoaded: boolean;
   searchQuery: string;
   isLoading: boolean;
   error: string | null;
@@ -16,6 +17,7 @@ function createFoodsStore() {
   const { subscribe, update } = writable<FoodsState>({
     items: [],
     excludedIds: [],
+    exclusionsLoaded: false,
     searchQuery: '',
     isLoading: false,
     error: null
@@ -24,10 +26,14 @@ function createFoodsStore() {
   return {
     subscribe,
 
-    async fetchFoods() {
+    async fetchFoods(force = false) {
       const auth = get(authStore);
       if (!auth.user) {
         update((s) => ({ ...s, items: [], isLoading: false }));
+        return;
+      }
+      const current = get(foodsStore);
+      if (!force && current.items.length > 0) {
         return;
       }
       update((s) => ({ ...s, isLoading: true, error: null }));
@@ -47,20 +53,29 @@ function createFoodsStore() {
       update(() => ({
         items: [],
         excludedIds: [],
+        exclusionsLoaded: false,
         searchQuery: '',
         isLoading: false,
         error: null
       }));
     },
 
-    async fetchExclusions() {
+    async fetchExclusions(force = false) {
       const auth = get(authStore);
       if (!auth.user) return;
+      const current = get(foodsStore);
+      if (!force && current.exclusionsLoaded) {
+        return;
+      }
       try {
         const exclusions = await repositories.userSettings.getFoodExclusions(auth.user.username);
-        update((s) => ({ ...s, excludedIds: exclusions.excludedFoodIds || [] }));
+        update((s) => ({
+          ...s,
+          excludedIds: exclusions.excludedFoodIds || [],
+          exclusionsLoaded: true
+        }));
       } catch {
-        // Exclusiones vacías o error silencioso
+        update((s) => ({ ...s, exclusionsLoaded: true }));
       }
     },
 

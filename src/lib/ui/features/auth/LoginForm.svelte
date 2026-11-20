@@ -9,7 +9,7 @@
   import Card from '../../components/Card.svelte';
   import { ENV } from '../../../core/config/env';
 
-  let usernameOrEmail = $state('');
+  let username = $state('');
   let password = $state('');
   let validationError = $state<string | null>(null);
 
@@ -22,7 +22,7 @@
     const userInput = form.elements.namedItem('username') as HTMLInputElement | null;
     const passInput = form.elements.namedItem('password') as HTMLInputElement | null;
 
-    const resolvedUser = (userInput?.value || usernameOrEmail).trim();
+    const resolvedUser = (userInput?.value || username).trim();
     const resolvedPass = passInput?.value || password;
 
     if (!resolvedUser) {
@@ -35,7 +35,7 @@
     }
 
     const ok = await authStore.login({
-      usernameOrEmail: resolvedUser,
+      username: resolvedUser,
       password: resolvedPass
     });
 
@@ -63,9 +63,9 @@
 
       <Input
         name="username"
-        label={$t('auth.usernameOrEmail')}
-        placeholder="ej. usuario o correo@ejemplo.com"
-        bind:value={usernameOrEmail}
+        label={$t('auth.username')}
+        placeholder="ej. marcos_fit"
+        bind:value={username}
         autocomplete="username"
         required
         disabled={$authStore.isLoading}

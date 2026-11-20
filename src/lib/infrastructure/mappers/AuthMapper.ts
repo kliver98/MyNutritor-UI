@@ -30,7 +30,6 @@ export class AuthMapper {
       id,
       userId: parsed.userId || undefined,
       username: parsed.username,
-      email: parsed.email || '',
       fullName: parsed.fullName || parsed.full_name || undefined,
       role: normalizedRole,
       roleId: normalizedRoleId,
@@ -54,7 +53,6 @@ export class AuthMapper {
       user = {
         id: 'current',
         username: 'usuario',
-        email: '',
         role: 'user',
         isActive: true,
         createdAt: new Date().toISOString()
@@ -79,7 +77,6 @@ export class AuthMapper {
       : {
           id: 'new',
           username: 'usuario',
-          email: '',
           role: 'user',
           isActive: true,
           createdAt: new Date().toISOString()

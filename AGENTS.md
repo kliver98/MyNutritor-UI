@@ -1,38 +1,40 @@
 # AGENTS.md - Reglas e Instrucciones para Modelos y Agentes Autónomos
 
-> [!IMPORTANT]
-> **DIRECTIVA OBLIGATORIA DE AUTOINYECCIÓN DE CONTEXTO:**
-> Todo modelo de lenguaje, asistente de codificación o agente autónomo (Antigravity, Cursor, Windsurf, Copilot, Claude Code, Gemini) que opere en este repositorio **DEBE LEER OBLIGATORIAMENTE** los siguientes archivos de habilidades antes de responder, planificar o realizar cualquier modificación de código:
+> [!TIP]
+> **DIRECTIVA DE OPERACIÓN ÁGIL Y EFICIENTE (PROYECTO PERSONAL MONOUSUARIO):**
+> Este repositorio es un proyecto personal desarrollado exclusivamente por el usuario y el agente.
 >
-> 1. [architecture-and-cleancode.md](file:///c:/Projects/MyNutritor-UI/.agent/skills/architecture-and-cleancode.md)
-> 2. [adding-new-features.md](file:///c:/Projects/MyNutritor-UI/.agent/skills/adding-new-features.md)
-> 3. [testing-standards.md](file:///c:/Projects/MyNutritor-UI/.agent/skills/testing-standards.md)
->
-> Ignorar estas reglas o escribir código acoplado sin seguir la Clean Architecture resultará en rechazo del Pull Request.
+> - **Cero Lecturas Previas Redundantes:** El agente **NO DEBE** leer archivos de `.agent/skills/` de forma obligatoria en cada prompt. Toda la arquitectura, estándares y reglas de negocio esenciales ya están consolidadas directamente en este archivo (inyectado a coste 0 en tu contexto inicial).
+> - **Acceso Bajo Demanda:** Las guías en `.agent/skills/` (`architecture-and-cleancode.md`, `adding-new-features.md`, `testing-standards.md`) son solo de referencia opcional cuando se diseñe una nueva entidad completa desde cero. Para corrección de bugs, ajustes de UI, estilos, linter o componentes existentes, ve **directamente** al archivo destino.
+> - **Verificación Rápida y Focalizada (Fast-Track):** En cambios ligeros, cosméticos o de UI, corre únicamente el test específico o `npm run check`. No corras la suite completa de 81 tests a menos que se modifique lógica transversal de dominio o stores globales. Para formateo, aplica `npx prettier --write <archivo_modificado>`.
 
 ---
 
-## Directrices Clave de MyNutritor UI
+## 1. Directrices de Arquitectura y Clean Code (En Memoria)
 
 1. **Arquitectura Limpia Desacoplada (Clean Architecture):**
-   - Respetar el flujo unidireccional: `UI -> Application (Stores) -> Infrastructure (Repositories & Mappers) -> Core (HttpClient)`.
-   - `src/lib/domain/` nunca depende de la UI ni de librerías de infraestructura.
-2. **Tipado Estricto:**
-   - Cero uso de `any`.
-   - Validación de entradas/salidas con `zod`.
-3. **Despliegue Estático:**
+   - Flujo unidireccional estricto: `UI -> Application (Stores) -> Infrastructure (Repositories, DTOs & Mappers) -> Core (HttpClient)`.
+   - `src/lib/domain/`: Entidades y tipos de negocio puros. **Nunca depende de la UI ni de infraestructura**.
+   - `src/lib/infrastructure/`: Implementaciones de repositorios, DTOs y Mappers explícitos.
+   - `src/lib/application/`: Orquestación de estado reactivo mediante Svelte Stores (`writable`, `derived`).
+   - `src/lib/ui/`: Componentes y vistas. **PROHIBIDO hacer llamadas directas a `fetch` o repositorios desde la UI**; toda acción pasa por los stores.
+2. **Patrón Data Mapper y Tipado Estricto:**
+   - Cero uso de `any` (usar `unknown` con validación estricta de **Zod** para entradas de API).
+   - Todo DTO de la API debe validarse con schema Zod y transformarse a entidad de dominio mediante un Mapper.
+3. **Svelte 5 Runes:**
+   - Usar runes oficiales: `$state`, `$derived`, `$props`, `$bindable`, `$effect`. Cero sintaxis obsoleta de Svelte 4 (`export let`, `let:`).
+4. **Despliegue Estático:**
    - Generación estática para GitHub Pages (`@sveltejs/adapter-static` con `fallback: '404.html'`).
    - `prerender = true; ssr = false;` en `src/routes/+layout.ts`.
-4. **Testing Obligatorio:**
-   - Mappers, repositorios y HttpClient deben contar con pruebas unitarias en Vitest.
-   - Tests de regresión e2e en Playwright.
+5. **Testing Focalizado:**
+   - Mappers, repositorios y utilidades cuentan con pruebas unitarias en Vitest.
 
 ---
 
-## Reglas de Negocio Oficiales de la Aplicación
+## 2. Reglas de Negocio Oficiales de la Aplicación
 
 1. **Mapeo de Roles y Permisos:**
-   - En la base de datos Firestore y respuestas del backend, `roleId: 1` corresponde estrictamente a `admin`, y `roleId: 2` a `user`. La UI jamás debe mostrar a un administrador con `roleId: 1` como usuario común.
+   - En Firestore y respuestas del backend, `roleId: 1` corresponde estrictamente a `admin`, y `roleId: 2` a `user`. La UI jamás debe mostrar a un administrador con `roleId: 1` como usuario común.
 
 2. **Confirmación Obligatoria en Eliminaciones (Regla Crítica):**
    - **TODA** acción de borrado o eliminación en la aplicación (usuarios, registros de alimentos, recetas, comidas del día) **DEBE solicitar confirmación obligatoria al usuario mediante modal** antes de ejecutar la petición al backend. Jamás realizar eliminaciones directas.
@@ -59,7 +61,7 @@
      - Actualización automática acumulada en `daily_macros`.
 
 5. **Reportes e Impresión de Alimentos (`/reports`):**
-   - Selector de fechas con 3 opciones obligatorias: 7 días, 14 días y Personalizado (máximo 2 meses).
+   - Selector de fechas con 3 opciones obligatorias: 7 días, 14 días y Personalizado (máximo 2 meses con selector tipo Booking/Aerolíneas interactivo).
    - Agrupación por días con totales de macronutrientes y calorías por jornada.
    - Cada registro muestra su hora real extraída del campo `timestamp` del backend (`parseReportTimestamp`). **PROHIBIDO** inventar horas genéricas fijas (`08:15`, `13:30`, `20:00`). Si no hay hora registrada, se muestra `--:--`.
    - Dropdown interactivo en cada comida para desplegar el desglose de alimentos consumidos (`MealBreakdownItem`).

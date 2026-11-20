@@ -226,7 +226,7 @@ function createFoodLogsStore() {
         };
 
         await repositories.dailyMacros.create(username, date, updatedMacro);
-        reportsStore.fetchData();
+        reportsStore.fetchData(undefined, undefined, true);
         toastStore.success('Comida registrada correctamente', 'Éxito');
         return true;
       } catch (err: unknown) {
