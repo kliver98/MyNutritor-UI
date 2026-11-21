@@ -21,7 +21,7 @@
 </script>
 
 <div
-  class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden {customClass}"
+  class="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden {customClass}"
 >
   {#if title || headerAction}
     <div

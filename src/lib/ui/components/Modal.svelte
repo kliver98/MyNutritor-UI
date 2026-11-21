@@ -45,7 +45,7 @@
       aria-label={title || 'Ventana emergente'}
       tabindex="-1"
       onclick={(e) => e.stopPropagation()}
-      class="relative z-[60] w-full {maxWidthClass} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      class="relative z-[60] w-full {maxWidthClass} bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
     >
       {#if title}
         <div

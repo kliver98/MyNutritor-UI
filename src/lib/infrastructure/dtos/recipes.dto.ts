@@ -2,11 +2,23 @@ import { z } from 'zod';
 
 export const RecipeIngredientDtoSchema = z
   .object({
-    food_item_id: z.string().optional(),
-    foodItemId: z.string().optional(),
-    name: z.string(),
-    amount: z.number().default(1),
-    unit: z.string().default('g'),
+    food_item_id: z
+      .union([z.string(), z.number()])
+      .optional()
+      .transform((v) => (v !== undefined ? String(v) : undefined)),
+    foodItemId: z
+      .union([z.string(), z.number()])
+      .optional()
+      .transform((v) => (v !== undefined ? String(v) : undefined)),
+    name: z.string().optional(),
+    title: z.string().optional(),
+    foodItemTitle: z.string().optional(),
+    food_item_title: z.string().optional(),
+    foodItemName: z.string().optional(),
+    amount: z.union([z.number(), z.string()]).optional(),
+    quantity: z.union([z.number(), z.string()]).optional(),
+    quantityText: z.string().optional(),
+    unit: z.string().optional().default('g'),
     notes: z.string().optional()
   })
   .passthrough();

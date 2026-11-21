@@ -10,7 +10,6 @@
   } from '../../application/auth/auth.store';
   import ThemeToggle from './ThemeToggle.svelte';
   import LanguageToggle from './LanguageToggle.svelte';
-  import RefreshButton from './RefreshButton.svelte';
   import Button from './Button.svelte';
 
   interface Props {
@@ -294,12 +293,9 @@
         </kbd>
       </button>
 
-      <!-- Language, Theme & Refresh -->
+      <!-- Language & Theme -->
       <LanguageToggle />
       <ThemeToggle />
-      {#if $isAuthenticated}
-        <RefreshButton />
-      {/if}
 
       <!-- User Profile Capsule or Login Buttons -->
       {#if $isAuthenticated && $currentUser}
@@ -479,9 +475,6 @@
             {$t('nav.admin')}
           </a>
         {/if}
-        <div class="pt-2">
-          <RefreshButton variant="button" class="w-full justify-center" />
-        </div>
         <div
           class="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center"
         >

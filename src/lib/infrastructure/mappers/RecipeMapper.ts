@@ -8,26 +8,59 @@ export class RecipeMapper {
     const unwrapped = unwrapData(raw);
     const parsed = RecipeDtoSchema.parse(unwrapped);
 
-    // If ingredients array is empty, check if ingredientsJson string is provided
-    let ingredients: RecipeIngredient[] = parsed.ingredients.map((ing) => ({
-      foodItemId: ing.foodItemId || ing.food_item_id,
-      name: ing.name,
-      amount: roundToDecimals(ing.amount, 2),
-      unit: ing.unit,
-      notes: ing.notes
-    }));
+    // Normalizar ingredientes desde parsed.ingredients o parsed.ingredientsJson
+    const normalizeIngredient = (item: Record<string, unknown>): RecipeIngredient => {
+      const resolvedName =
+        item.name ||
+        item.title ||
+        item.foodItemTitle ||
+        item.food_item_title ||
+        item.foodItemName ||
+        'Alimento';
+
+      let resolvedAmount = 1;
+      let resolvedUnit = 'g';
+
+      if (item.amount !== undefined && item.amount !== null && !isNaN(Number(item.amount))) {
+        resolvedAmount = Number(item.amount);
+      } else if (
+        item.quantity !== undefined &&
+        item.quantity !== null &&
+        !isNaN(Number(item.quantity))
+      ) {
+        resolvedAmount = Number(item.quantity);
+      } else if (typeof item.quantityText === 'string') {
+        const match = item.quantityText.match(/^([\d.,]+)\s*(.*)$/);
+        if (match) {
+          resolvedAmount = parseFloat(match[1].replace(',', '.')) || 1;
+          resolvedUnit = match[2] || 'g';
+        }
+      }
+
+      if (typeof item.unit === 'string' && item.unit.trim()) {
+        resolvedUnit = item.unit.trim();
+      }
+
+      return {
+        foodItemId: String(item.foodItemId || item.food_item_id || ''),
+        name: String(resolvedName),
+        amount: roundToDecimals(resolvedAmount, 2),
+        unit: resolvedUnit,
+        notes: item.notes ? String(item.notes) : undefined
+      };
+    };
+
+    let ingredients: RecipeIngredient[] = (parsed.ingredients || []).map((ing) =>
+      normalizeIngredient(ing as Record<string, unknown>)
+    );
 
     if (ingredients.length === 0 && parsed.ingredientsJson) {
       try {
         const parsedJson = JSON.parse(parsed.ingredientsJson);
         if (Array.isArray(parsedJson)) {
-          ingredients = parsedJson.map((item: Record<string, unknown>) => ({
-            foodItemId: String(item.foodItemId || item.food_item_id || ''),
-            name: String(item.name || item.title || 'Ingrediente'),
-            amount: roundToDecimals(Number(item.amount || item.quantity || 1), 2),
-            unit: String(item.unit || 'g'),
-            notes: item.notes ? String(item.notes) : undefined
-          }));
+          ingredients = parsedJson.map((item) =>
+            normalizeIngredient(item as Record<string, unknown>)
+          );
         }
       } catch {
         // Ignorar error al parsear JSON no válido
@@ -137,7 +170,10 @@ export class RecipeMapper {
   ): Record<string, unknown> {
     const ingredientsPayload = (recipe.ingredients || []).map((ing) => ({
       foodItemId: ing.foodItemId || '',
-      foodItemTitle: ing.name || 'Ingrediente',
+      foodItemTitle: ing.name || 'Alimento',
+      name: ing.name || 'Alimento',
+      amount: ing.amount,
+      unit: ing.unit || 'g',
       quantityText: `${ing.amount}${ing.unit || 'g'}`,
       calories: 0,
       proteinGrams: 0,

@@ -70,6 +70,26 @@ describe('RecipeMapper', () => {
     expect(list[0].permissions.isPublic).toBe(true);
   });
 
+  it('debe mapear correctamente ingredientes guardados con foodItemTitle y quantityText', () => {
+    const raw = {
+      id: 'rec-cr-2',
+      title: 'Tortilla 2 Huevos',
+      ingredientsJson: JSON.stringify([
+        { foodItemTitle: 'Huevo', quantityText: '2 unidades' },
+        { foodItemTitle: 'Tomate', quantityText: '100g' }
+      ])
+    };
+
+    const domain = RecipeMapper.toDomain(raw);
+    expect(domain.ingredients).toHaveLength(2);
+    expect(domain.ingredients[0].name).toBe('Huevo');
+    expect(domain.ingredients[0].amount).toBe(2);
+    expect(domain.ingredients[0].unit).toBe('unidades');
+    expect(domain.ingredients[1].name).toBe('Tomate');
+    expect(domain.ingredients[1].amount).toBe(100);
+    expect(domain.ingredients[1].unit).toBe('g');
+  });
+
   it('debe transformar una receta a DTO de persistencia cumpliendo el esquema inmutable de [recipes]', () => {
     const domainRecipe = {
       title: 'Tortilla de Verduras',

@@ -72,3 +72,14 @@
 6. **Estándares Visuales y Responsive Mobile:**
    - **Backdrops de Modales:** Todo modal, drawer y command palette debe utilizar `bg-slate-950/95 backdrop-blur-md` cubriendo la pantalla completa para oscurecer y difuminar totalmente el header y fondos, evitando cualquier distracción visual.
    - **Entradas en Móvil (360px+):** Todos los inputs, selects y contenedores flexibles deben incluir `min-w-0` y comportamiento adaptativo (`flex-col sm:flex-row`), previniendo desbordamientos horizontales o defasamiento en pantallas pequeñas.
+   - **Contraste en Contenedores (`Card`, `Modal`, `Drawer`):** Todos los componentes contenedores que utilicen fondos claros (`bg-white dark:bg-slate-900`) deben forzar `text-slate-900 dark:text-slate-100` para evitar que hereden estilos de texto blanco si el usuario define fondos de pantalla personalizados oscuros.
+
+7. **Propiedad y Modificación de Recetas:**
+   - **Solo los dueños pueden modificar:** Únicamente el usuario creador/dueño de una receta (`isRecipeOwner`) tiene permisos para modificarla, editar sus permisos/colaboradores (`openPermissionsModal`) o eliminarla (`confirmDeleteRecipe`).
+   - **Recetas ajenas:** Si una receta pertenece a otro usuario (pública o compartida), la UI debe renderizarla en modo de solo lectura, ocultando los botones de permisos y eliminación, e indicando la procedencia (`Receta de: @autor` o badges `Pública`/`Compartida`).
+   - **Restricción de API de Usuarios:** El endpoint `GET /api/v1/users` es exclusivo para administradores (`roleId: 1`). Los usuarios estándar (`roleId: 2`) jamás deben invocar este endpoint; la UI debe omitir la precarga de usuarios para roles estándar y evitar errores `403 Forbidden`.
+
+8. **Despliegue Continuo Automatizado (CI/CD a GitHub Pages):**
+   - **Push a `main` desencadena despliegue:** Cada `push` directo a la rama `main` activa automáticamente el workflow de GitHub Actions (`.github/workflows/deploy.yml`), el cual compila, ejecuta pruebas unitarias (`npm run test:run`), validaciones de tipos (`npm run check`), linter (`npm run lint`), compila el sitio estático (`npm run build`) y lo despliega a la rama `gh-pages`.
+   - **Verificación Local Obligatoria:** Antes de hacer commit y push a `main`, el agente debe verificar que `npm run check`, `npm run lint` y los tests pasen exitosamente al 100% para garantizar que el pipeline remoto finalice en verde.
+

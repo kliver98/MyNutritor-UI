@@ -43,7 +43,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={title || 'Panel lateral'}
-    class="fixed inset-y-0 right-0 z-[60] w-full {widthClass} bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transform transition-transform duration-250 ease-out"
+    class="fixed inset-y-0 right-0 z-[60] w-full {widthClass} bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transform transition-transform duration-250 ease-out"
   >
     <!-- Header -->
     <div
