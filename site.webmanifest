@@ -1,0 +1,26 @@
+{
+  "name": "MyNutritor",
+  "short_name": "MyNutritor",
+  "description": "Gestión Nutricional Ligera y Ultrarrápida",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#059669",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#047857" />
+      <stop offset="35%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a7f3d0" />
+      <stop offset="100%" stop-color="#ffffff" />
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#022c22" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Squircle Base with Shadow -->
+  <rect x="36" y="36" width="440" height="440" rx="112" fill="url(#bgGrad)" filter="url(#softShadow)" />
+
+  <!-- Subtle Inner Border Highlight -->
+  <rect x="38" y="38" width="436" height="436" rx="110" fill="none" stroke="#ffffff" stroke-width="4" stroke-opacity="0.2" />
+
+  <!-- Geometric Bold "N" Icon -->
+  <!-- Left stem: rounded tips -->
+  <!-- Diagonal and Right stem crafted as unified path -->
+  <path
+    d="M 148 376
+       L 148 160
+       C 148 144 160 136 174 136
+       C 188 136 198 144 204 154
+       L 316 312
+       L 316 160
+       C 316 146 326 136 340 136
+       C 354 136 364 146 364 160
+       L 364 352
+       C 364 368 352 376 338 376
+       C 324 376 314 368 308 358
+       L 196 200
+       L 196 352
+       C 196 366 186 376 172 376
+       C 158 376 148 366 148 352
+       Z"
+    fill="#ffffff"
+  />
+
+  <!-- Organic Nutrition Sprout / Leaf Accent at the top-right -->
+  <path
+    d="M 348 136
+       C 348 90 395 72 418 68
+       C 418 96 394 142 348 136
+       Z"
+    fill="url(#leafGrad)"
+    opacity="0.95"
+  />
+</svg>
