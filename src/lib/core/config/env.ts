@@ -1,12 +1,19 @@
 /**
  * Configuración centralizada de variables de entorno y constantes del sistema
  */
+declare const __APP_BUILD_TIME__: string | undefined;
+
+const now = new Date();
+const pad = (n: number) => String(n).padStart(2, '0');
+const fallbackBuildTime = `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
 export const ENV = {
   API_BASE_URL: (
     import.meta.env.VITE_API_BASE_URL || 'https://my-nutritor-be-74319366403.us-central1.run.app'
   ).replace(/\/$/, ''),
   APP_NAME: 'MyNutritor',
-  APP_VERSION: '1.0.0',
+  APP_VERSION: typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : fallbackBuildTime,
+  BUILD_TIME: typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : fallbackBuildTime,
   APP_ENV: import.meta.env.VITE_APP_ENV || (import.meta.env.DEV ? 'development' : 'production'),
   DEFAULT_TIMEOUT_MS: Number(import.meta.env.VITE_API_TIMEOUT_MS) || 15000,
   ENABLE_DEMO_SHORTCUTS:

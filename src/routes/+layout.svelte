@@ -11,6 +11,7 @@
   import { authStore, isAuthenticated, isAdmin } from '$lib/application/auth/auth.store';
   import { healthStore } from '$lib/application/system/health.store';
   import { customBgStore, isCustomBgDark } from '$lib/application/theme/theme.store';
+  import { ENV } from '$lib/core/config/env';
   import { t } from '$lib/core/i18n/i18n.store';
 
   let { children } = $props();
@@ -165,8 +166,12 @@
       class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2"
     >
       <p>MyNutritor &copy; {new Date().getFullYear()} - {$t('common.tagline')}</p>
-      <div class="flex items-center gap-4 text-xs">
+      <div class="flex items-center gap-3 text-xs">
         <a href="{base}/help" class="hover:underline">{$t('nav.help')}</a>
+        <span class="text-slate-300 dark:text-slate-700">|</span>
+        <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+          v{ENV.BUILD_TIME}
+        </span>
         {#if $isAdmin}
           <span>•</span>
           <a href="{base}/status" class="hover:underline text-emerald-600 dark:text-emerald-400">

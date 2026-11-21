@@ -82,4 +82,3 @@
 8. **Despliegue Continuo Automatizado (CI/CD a GitHub Pages):**
    - **Push a `main` desencadena despliegue:** Cada `push` directo a la rama `main` activa automáticamente el workflow de GitHub Actions (`.github/workflows/deploy.yml`), el cual compila, ejecuta pruebas unitarias (`npm run test:run`), validaciones de tipos (`npm run check`), linter (`npm run lint`), compila el sitio estático (`npm run build`) y lo despliega a la rama `gh-pages`.
    - **Verificación Local Obligatoria:** Antes de hacer commit y push a `main`, el agente debe verificar que `npm run check`, `npm run lint` y los tests pasen exitosamente al 100% para garantizar que el pipeline remoto finalice en verde.
-
